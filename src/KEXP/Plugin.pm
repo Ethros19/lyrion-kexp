@@ -12,7 +12,8 @@ use Plugins::KEXP::LiveOnKEXP;
 use Plugins::KEXP::ProtocolHandler;
 use Plugins::KEXP::Util qw(dayKey formatDay formatClock formatDuration);
 
-use constant LIVE_URL => 'https://kexp.streamguys1.com/kexp160.aac';
+use constant LIVE_URL   => 'https://kexp.streamguys1.com/kexp160.aac';
+use constant DONATE_URL => 'https://www.kexp.org/donate/';
 
 my $log = Slim::Utils::Log->addLogCategory({
 	category     => 'plugin.kexp',
@@ -73,6 +74,14 @@ sub handleFeed {
 			type  => 'link',
 			url   => \&programMenu,
 			image => icon(),
+		},
+		# Web UIs that understand weblink (Material) open the page; players
+		# that can't open a browser just show the address.
+		{
+			name    => cstring($client, 'PLUGIN_KEXP_DONATE'),
+			type    => 'text',
+			weblink => DONATE_URL,
+			image   => icon(),
 		},
 	] });
 }

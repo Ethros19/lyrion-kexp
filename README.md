@@ -9,6 +9,7 @@ A [Lyrion Music Server](https://lyrion.org) plugin for [KEXP](https://kexp.org):
 - Each show opens to its tracklist. Play the whole show, or jump straight in at any song.
 - While an archived show plays, now-playing shows the song that was on air at that moment (title, artist, album art), pulled from KEXP's playlist data.
 - Seeking works: archive shows are plain seekable MP3s.
+- **Donate to KEXP** — opens kexp.org/donate in Material Skin; other players show the address.
 
 ## Install
 
