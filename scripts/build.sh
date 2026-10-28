@@ -23,7 +23,7 @@ cat > repo.xml <<EOF
 	<plugins>
 		<plugin name="KEXP" version="$version" minTarget="8.0" maxTarget="*">
 			<title lang="EN">KEXP</title>
-			<desc lang="EN">Listen to KEXP live, or play any show from the last two weeks of the KEXP archive.</desc>
+			<desc lang="EN">Listen to KEXP live, play any show from the last two weeks of the archive, and browse every Live on KEXP session.</desc>
 			<creator>Ethan Rosch</creator>
 			<category>radio</category>
 			<link>https://github.com/$REPO</link>

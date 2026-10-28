@@ -2,10 +2,19 @@ PLUGIN_KEXP
 	EN	KEXP
 
 PLUGIN_KEXP_DESC
-	EN	Listen to KEXP live, or play any show from the last two weeks of the KEXP archive.
+	EN	Listen to KEXP live, play any show from the last two weeks of the archive, and browse every Live on KEXP session.
 
 PLUGIN_KEXP_LIVE
 	EN	Listen Live
+
+PLUGIN_KEXP_LIVE_ON_KEXP
+	EN	Live on KEXP
+
+PLUGIN_KEXP_LATEST
+	EN	Latest Sessions
+
+PLUGIN_KEXP_SEARCH_ARTISTS
+	EN	Search Artists
 
 PLUGIN_KEXP_RECENT
 	EN	Recent Shows

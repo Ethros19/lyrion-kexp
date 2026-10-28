@@ -3,6 +3,7 @@
 A [Lyrion Music Server](https://lyrion.org) plugin for [KEXP](https://kexp.org): the live stream, plus every show from the last two weeks of the archive.
 
 - **Listen Live** — the 160 kbps AAC stream
+- **Live on KEXP** — every studio session from the podcast (2013 → now): latest 50, by year, or search by artist
 - **Recent Shows** — browse by day (station time, Pacific)
 - **Programs** — browse by program (Audioasis, Wo' Pop, Expansions, …)
 - Each show opens to its tracklist. Play the whole show, or jump straight in at any song.

@@ -7,13 +7,16 @@ Lyrion Music Server (LMS) plugin: KEXP live stream + the two-week show archive.
   - `Plugin.pm` — OPML menus (Live, Recent Shows by day, Programs, per-show tracklist)
   - `ProtocolHandler.pm` — `kexp://show/<id>[/<secondsIntoShow>]` → archive MP3 + start offset; dynamic now-playing via `getMetadataFor`
   - `API.pm` — async api.kexp.org client + caching
-  - `Util.pm` — pure time/format helpers (unit tested)
-- `tests/` — `prove tests/` (only Util is testable outside LMS)
+  - `LiveOnKEXP.pm` — Live on KEXP podcast (Omny RSS, ~1,300 eps), cached 6 h; RemoteMetadata provider for now-playing
+  - `Util.pm` — pure time/format/RSS helpers (unit tested)
+- `tests/` — `prove tests/` (only Util is testable outside LMS); `KEXP_FEED=<saved podcast.rss> prove tests/` also checks the real feed
 - `scripts/dev-server.sh` — Docker LMS on :9000 with the plugin mounted read-only; `docker restart kexp-lms` to reload code
 - `scripts/test-player.sh` — headless squeezelite in Docker (plays faster than real time); `scripts/lms.sh` — JSON-RPC helper
 - `scripts/build.sh` — zip to `dist/`
 
 ## Gotchas
+- Live on KEXP enclosures redirect traffic.omny.fm → kexp-podcast.streamguys1.com; the queued track keeps the redirected URL, so metadata is matched by Omny clip id, not host.
+- The feed is ~5 MB; parse with regex (`parseRssItems`), not XML::Simple, to avoid blocking the server.
 - `/v2/plays/` always returns a `next` link, even past the end — `_getAll` stops on short pages.
 - Most CLI menu queries hang without a connected player; start the test player.
 - Plain-HTTP egress from containers returns 500 on this machine; HTTPS works.

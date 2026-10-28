@@ -1,14 +1,16 @@
 package Plugins::KEXP::Plugin;
 
 use strict;
+use utf8;
 use base qw(Slim::Plugin::OPMLBased);
 
 use Slim::Utils::Log;
 use Slim::Utils::Strings qw(cstring);
 
 use Plugins::KEXP::API;
+use Plugins::KEXP::LiveOnKEXP;
 use Plugins::KEXP::ProtocolHandler;
-use Plugins::KEXP::Util qw(dayKey formatDay formatClock);
+use Plugins::KEXP::Util qw(dayKey formatDay formatClock formatDuration);
 
 use constant LIVE_URL => 'https://kexp.streamguys1.com/kexp160.aac';
 
@@ -23,6 +25,12 @@ sub initPlugin {
 
 	Slim::Player::ProtocolHandlers->registerHandler(
 		kexp => 'Plugins::KEXP::ProtocolHandler'
+	);
+
+	Slim::Formats::RemoteMetadata->registerProvider(
+		# Omny clip urls, before (traffic.omny.fm) and after (streamguys) redirect
+		match => qr{^https?://[^/]+/d/clips/[^/]+/[^/]+/[0-9a-f-]{36}/}i,
+		func  => \&Plugins::KEXP::LiveOnKEXP::metadataProvider,
 	);
 
 	$class->SUPER::initPlugin(
@@ -46,6 +54,12 @@ sub handleFeed {
 			name  => cstring($client, 'PLUGIN_KEXP_LIVE'),
 			type  => 'audio',
 			url   => LIVE_URL,
+			image => icon(),
+		},
+		{
+			name  => cstring($client, 'PLUGIN_KEXP_LIVE_ON_KEXP'),
+			type  => 'link',
+			url   => \&liveOnKexpMenu,
 			image => icon(),
 		},
 		{
@@ -212,6 +226,123 @@ sub showMenu {
 			$cb->({ items => \@items });
 		});
 	});
+}
+
+# --- Live on KEXP ---------------------------------------------------------
+
+use constant LATEST_COUNT => 50;
+
+sub _withEpisodes {
+	my ($client, $cb, $then) = @_;
+
+	Plugins::KEXP::LiveOnKEXP->episodes(sub {
+		my $episodes = shift;
+		if (!$episodes || !@$episodes) {
+			return $cb->({ items => [{
+				name => cstring($client, 'PLUGIN_KEXP_ERROR'),
+				type => 'text',
+			}] });
+		}
+		$then->($episodes);
+	});
+}
+
+sub liveOnKexpMenu {
+	my ($client, $cb) = @_;
+
+	_withEpisodes($client, $cb, sub {
+		my $episodes = shift;
+
+		my @items = (
+			{
+				name  => cstring($client, 'PLUGIN_KEXP_LATEST'),
+				type  => 'link',
+				url   => \&lokLatest,
+				image => $episodes->[0]->{image} || icon(),
+			},
+			{
+				name  => cstring($client, 'PLUGIN_KEXP_SEARCH_ARTISTS'),
+				type  => 'search',
+				url   => \&lokSearch,
+				image => icon(),
+			},
+		);
+
+		my %seen;
+		for my $year (grep { !$seen{$_}++ } map { _year($_->{date}) } @$episodes) {
+			push @items, {
+				name        => $year,
+				type        => 'link',
+				url         => \&lokYear,
+				passthrough => [$year],
+				image       => icon(),
+			};
+		}
+
+		$cb->({ items => \@items });
+	});
+}
+
+sub lokLatest {
+	my ($client, $cb) = @_;
+
+	_withEpisodes($client, $cb, sub {
+		my $episodes = shift;
+		my $last = $#$episodes < LATEST_COUNT - 1 ? $#$episodes : LATEST_COUNT - 1;
+		$cb->({ items => [ map { _episodeItem($_) } @$episodes[0 .. $last] ] });
+	});
+}
+
+sub lokYear {
+	my ($client, $cb, undef, $year) = @_;
+
+	_withEpisodes($client, $cb, sub {
+		$cb->({ items => [ map { _episodeItem($_) } grep { _year($_->{date}) eq $year } @{ shift() } ] });
+	});
+}
+
+sub lokSearch {
+	my ($client, $cb, $args) = @_;
+
+	my $query = lc($args->{search} || '');
+	$query =~ s/^\s+|\s+$//g;
+	return $cb->({ items => [] }) unless length $query;
+
+	_withEpisodes($client, $cb, sub {
+		my @hits = grep { index(lc $_->{title}, $query) >= 0 } @{ shift() };
+
+		$cb->({ items => @hits
+			? [ map { _episodeItem($_) } @hits ]
+			: [{ name => cstring($client, 'EMPTY'), type => 'text' }]
+		});
+	});
+}
+
+sub _year {
+	my $epoch = shift || return '?';
+	return (gmtime($epoch))[5] + 1900;
+}
+
+sub _episodeItem {
+	my $ep = shift;
+
+	my $date = $ep->{date} ? formatDay($ep->{date}, 0) . ', ' . _year($ep->{date}) : '';
+	$date =~ s/^\w+ //;    # "Oct 22, 2026" - weekday is noise here
+
+	my $info = join(' · ', grep { $_ } $date, formatDuration($ep->{secs}));
+
+	return {
+		name     => $date ? "$ep->{artist} ($date)" : $ep->{artist},
+		line1    => $ep->{artist},
+		line2    => $info,
+		title    => $ep->{artist},
+		artist   => 'Live on KEXP',
+		album    => $date,
+		type     => 'audio',
+		url      => $ep->{url},
+		image    => $ep->{image} || icon(),
+		duration => $ep->{secs},
+	};
 }
 
 1;
