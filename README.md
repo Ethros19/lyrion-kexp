@@ -19,11 +19,10 @@ A [Lyrion Music Server](https://lyrion.org) plugin for [KEXP](https://kexp.org):
 
 ## Works with LyrionJS
 
-Tested with [LyrionJS](https://github.com/JameZUK/LyrionJS) (browser as player, v0.2.31): archive shows (including
-start offsets and seeking), Live on KEXP sessions, and the live AAC stream all play through LMS's proxied
-streaming, and the menus work in LyrionJS's own look as well as in Material Skin. One difference: in
-LyrionJS's own look, *Donate* shows the address as text rather than a link (its plugin lists don't support
-links); in Material Skin it opens the page, and the plugin's settings page always has a working Donate link.
+Tested with [LyrionJS](https://github.com/JameZUK/LyrionJS) (browser as player): archive shows (including
+start offsets and seeking), Live on KEXP sessions, and the live stream all play through LMS's proxied
+streaming, and the menus work in LyrionJS's own look as well as in Material Skin. *Donate* opens
+kexp.org/donate in both, from LyrionJS 0.2.33 on ([thanks for the quick fix](https://github.com/JameZUK/LyrionJS/issues/16)).
 
 ## Install
 

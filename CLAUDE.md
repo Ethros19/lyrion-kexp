@@ -22,16 +22,16 @@ Lyrion Music Server (LMS) plugin: KEXP live stream + the two-week show archive.
 - Genres come from program `tags` via `genresForTags` (generic Rock/Eclectic dropped, neighbours merged, unknown tags pass through). Live on KEXP has no genre data.
 - Bump the `kexp:liveonkexp:vN` cache key when the parsed episode shape changes.
 - LMS/browsers cache resized icons by path: when changing an image, give it a new filename (e.g. `kexp-logo.png`), don't overwrite.
-- In CLI list mode (what LyrionJS's own look uses), LMS drops `weblink` entirely — links can't work there from the plugin side.
+- In CLI list mode LMS drops `weblink` entirely; LyrionJS ≥ 0.2.33 works around it by re-fetching in menu mode.
 - Live on KEXP enclosures redirect traffic.omny.fm → kexp-podcast.streamguys1.com; the queued track keeps the redirected URL, so metadata is matched by Omny clip id, not host.
 - The feed is ~5 MB; parse with regex (`parseRssItems`), not XML::Simple, to avoid blocking the server.
 - `/v2/plays/` always returns a `next` link, even past the end — `_getAll` stops on short pages.
 - Most CLI menu queries hang without a connected player; start the test player.
 - Plain-HTTP egress from containers returns 500 on this machine; HTTPS works.
 
-## LyrionJS compatibility (verified v0.2.31, Oct 2026)
+## LyrionJS compatibility (verified v0.2.31 and v0.2.33, Oct 2026)
 - LyrionJS sets `mp3StreamingMethod: 1` (proxied) on its players (MAC `02:4c:4a:…`), so the browser only fetches from LMS — no CORS concerns for the CDNs. Keep handlers proxy-friendly (seekdata/Range on the server side).
-- Its own UI browses via `<cmd> items … want_url:1` (not menu mode): it uses `name` + `line2`, treats `type: text` as inert, ignores `weblink`, and only offers play/add menus on `isaudio` items.
+- Its own UI browses via `<cmd> items … want_url:1` (not menu mode): it uses `name` + `line2` and only offers play/add menus on `isaudio` items. Since 0.2.33 it re-asks in menu mode for text items' `weblink` (our issue #16), so Donate works; before that, text items were inert.
 - To retest: unzip its release into `.dev/config/cache/Plugins/LyrionJS/`, start the dev server, open http://localhost:9000/plugins/LyrionJS/ (Playwright works; plays in real time).
 
 ## KEXP archive facts (verified Oct 2026)
