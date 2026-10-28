@@ -4,14 +4,14 @@
 		<title lang="EN">KEXP</title>
 	</details>
 	<plugins>
-		<plugin name="KEXP" version="0.3.0" minTarget="8.0" maxTarget="*">
+		<plugin name="KEXP" version="0.4.0" minTarget="8.0" maxTarget="*">
 			<title lang="EN">KEXP</title>
 			<desc lang="EN">Listen to KEXP live, play any show from the last two weeks of the archive, and browse every Live on KEXP session.</desc>
 			<creator>Ethan Rosch</creator>
 			<category>radio</category>
 			<link>https://github.com/Ethros19/lyrion-kexp</link>
-			<url>https://github.com/Ethros19/lyrion-kexp/releases/download/v0.3.0/KEXP-0.3.0.zip</url>
-			<sha>4ac806df05193aeeec84f7667b72710e44d9b06a</sha>
+			<url>https://github.com/Ethros19/lyrion-kexp/releases/download/v0.4.0/KEXP-0.4.0.zip</url>
+			<sha>50433d52a865fad34b1d4a7f2ffc82730c330588</sha>
 		</plugin>
 	</plugins>
 </extensions>
