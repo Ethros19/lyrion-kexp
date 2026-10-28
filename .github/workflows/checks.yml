@@ -1,0 +1,35 @@
+# Unit tests on every push; on a weekly schedule, also check that the
+# (undocumented) KEXP services still behave the way the plugin expects.
+# A failed scheduled run emails the repo owner.
+name: checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 14 * * 1"   # Mondays, 14:17 UTC
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Perl deps
+        run: sudo apt-get install -y --no-install-recommends libhtml-parser-perl
+      - name: Unit tests
+        run: prove tests/
+
+  kexp-services:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Perl deps
+        run: sudo apt-get install -y --no-install-recommends libhtml-parser-perl
+      - name: KEXP endpoints
+        run: python3 scripts/smoke.py
+      - name: Session notes still parse (live feed)
+        run: |
+          curl -sSfL -o feed.rss "https://www.omnycontent.com/d/playlist/bad5d079-8dcb-4630-8770-aa090049131d/18f3a48e-1c64-43e8-96e9-aa40002038ee/856f4314-821f-46ca-bc8e-aa40002038f2/podcast.rss"
+          KEXP_FEED=feed.rss prove -v tests/rss.t
