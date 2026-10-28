@@ -11,6 +11,14 @@ A [Lyrion Music Server](https://lyrion.org) plugin for [KEXP](https://kexp.org):
 - Seeking works: archive shows are plain seekable MP3s.
 - **Donate to KEXP** — opens kexp.org/donate in Material Skin; other players show the address.
 
+## Works with LyrionJS
+
+Tested with [LyrionJS](https://github.com/JameZUK/LyrionJS) (browser as player, v0.2.31): archive shows (including
+start offsets and seeking), Live on KEXP sessions, and the live AAC stream all play through LMS's proxied
+streaming, and the menus work in LyrionJS's own look as well as in Material Skin. One difference: in
+LyrionJS's own look, *Donate* shows the address as text rather than a link (its plugin lists don't support
+links); in Material Skin it opens the page.
+
 ## Install
 
 In Lyrion: *Settings → Manage Plugins*, scroll to the bottom, and add this repository URL:

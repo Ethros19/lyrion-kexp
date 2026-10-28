@@ -21,6 +21,11 @@ Lyrion Music Server (LMS) plugin: KEXP live stream + the two-week show archive.
 - Most CLI menu queries hang without a connected player; start the test player.
 - Plain-HTTP egress from containers returns 500 on this machine; HTTPS works.
 
+## LyrionJS compatibility (verified v0.2.31, Oct 2026)
+- LyrionJS sets `mp3StreamingMethod: 1` (proxied) on its players (MAC `02:4c:4a:…`), so the browser only fetches from LMS — no CORS concerns for the CDNs. Keep handlers proxy-friendly (seekdata/Range on the server side).
+- Its own UI browses via `<cmd> items … want_url:1` (not menu mode): it uses `name` + `line2`, treats `type: text` as inert, ignores `weblink`, and only offers play/add menus on `isaudio` items.
+- To retest: unzip its release into `.dev/config/cache/Plugins/LyrionJS/`, start the dev server, open http://localhost:9000/plugins/LyrionJS/ (Playwright works; plays in real time).
+
 ## KEXP archive facts (verified Oct 2026)
 - `GET https://api.kexp.org/get_streaming_url/?timestamp=<ISO UTC>` → `{sg-url, sg-url-next, sg-offset}`
 - One static MP3 per show on `kexp-archive.streamguys1.com`, spanning show start − 10 min → show end. 128 kbps CBR, byte-range seekable, downloads far faster than real time. `bitrate` param is ignored.
