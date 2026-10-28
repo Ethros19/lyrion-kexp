@@ -9,10 +9,11 @@ use Slim::Utils::Strings qw(cstring);
 
 use Plugins::KEXP::API;
 use Plugins::KEXP::LiveOnKEXP;
+use Plugins::KEXP::Live;
 use Plugins::KEXP::ProtocolHandler;
 use Plugins::KEXP::Util qw(dayKey formatDay formatClock formatDuration);
 
-use constant LIVE_URL   => 'https://kexp.streamguys1.com/kexp160.aac';
+use constant LIVE_URL   => Plugins::KEXP::Live::STREAM_URL;
 use constant DONATE_URL => 'https://www.kexp.org/donate/';
 
 my $log = Slim::Utils::Log->addLogCategory({
@@ -32,6 +33,11 @@ sub initPlugin {
 		require Plugins::KEXP::Settings;
 		Plugins::KEXP::Settings->new;
 	}
+
+	Slim::Formats::RemoteMetadata->registerProvider(
+		match => Plugins::KEXP::Live::URL_MATCH,
+		func  => \&Plugins::KEXP::Live::metadataProvider,
+	);
 
 	Slim::Formats::RemoteMetadata->registerProvider(
 		# Omny clip urls, before (traffic.omny.fm) and after (streamguys) redirect
@@ -108,7 +114,7 @@ sub _withShows {
 				type => 'text',
 			}] });
 		}
-		$then->([ grep { !$_->{live} } @$shows ]);
+		$then->([ grep { Plugins::KEXP::API->isArchived($_) } @$shows ]);
 	});
 }
 
@@ -184,13 +190,28 @@ sub programShows {
 
 	_withShows($client, $cb, sub {
 		my @shows = grep { $_->{program} eq $program } @{ shift() };
+		my @items;
 
-		$cb->({ items => [
-			map {
-				my $when = formatDay($_->{start}, $_->{tzOffset}) . ', ' . formatClock($_->{start}, $_->{tzOffset});
-				_showItem($_, $_->{host} ? "$when  $_->{host}" : $when);
-			} @shows
-		] });
+		# a stable address for "newest show", so favourites and alarms don't
+		# go stale when individual shows leave the archive
+		if (@shows && $shows[0]->{programId}) {
+			push @items, {
+				name  => cstring($client, 'PLUGIN_KEXP_LATEST_EPISODE'),
+				line1 => cstring($client, 'PLUGIN_KEXP_LATEST_EPISODE'),
+				line2 => cstring($client, 'PLUGIN_KEXP_LATEST_HINT'),
+				title => "$program (" . cstring($client, 'PLUGIN_KEXP_LATEST_EPISODE') . ')',
+				type  => 'audio',
+				url   => Plugins::KEXP::ProtocolHandler->latestUrl($shows[0]->{programId}),
+				image => $shows[0]->{programImage} || icon(),
+			};
+		}
+
+		push @items, map {
+			my $when = formatDay($_->{start}, $_->{tzOffset}) . ', ' . formatClock($_->{start}, $_->{tzOffset});
+			_showItem($_, $_->{host} ? "$when  $_->{host}" : $when);
+		} @shows;
+
+		$cb->({ items => \@items });
 	});
 }
 

@@ -63,3 +63,9 @@ PLUGIN_KEXP_PLAY_SESSION
 
 PLUGIN_KEXP_SETLIST
 	EN	Setlist
+
+PLUGIN_KEXP_LATEST_EPISODE
+	EN	Latest Episode
+
+PLUGIN_KEXP_LATEST_HINT
+	EN	Always the newest show. Favourite it, or use it for an alarm.

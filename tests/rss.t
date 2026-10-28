@@ -71,6 +71,8 @@ if (my $feed = $ENV{KEXP_FEED} and -f $ENV{KEXP_FEED}) {
 	cmp_ok(scalar @$real, '>', 1000, 'real feed: >1000 episodes');
 	is(scalar(grep { !$_->{date} } @$real), 0, 'real feed: all dated');
 	my $withSet = grep { $_->{setlist} } @$real;
+	my $newest = grep { $_->{setlist} } @$real[0 .. 19];
+	cmp_ok($newest, '>=', 15, "real feed: $newest/20 newest sessions have setlists (new notes format?)");
 	cmp_ok($withSet / @$real, '>', 0.9, sprintf('real feed: %d/%d have setlists', $withSet, scalar @$real));
 	my @odd = grep { $_->{artist} =~ /live on kexp/i } @$real;
 	diag("unstripped titles: " . join(' | ', map { $_->{title} } @odd[0 .. ($#odd < 9 ? $#odd : 9)])) if @odd;

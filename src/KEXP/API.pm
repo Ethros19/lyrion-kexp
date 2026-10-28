@@ -27,6 +27,7 @@ my $cache = Slim::Utils::Cache->new;
 my %shows;
 my %plays;
 my %inflight;
+my %programNames;
 
 sub _get {
 	my ($url, $cb, $ttl) = @_;
@@ -105,6 +106,7 @@ sub _normalizeShow {
 sub _remember {
 	my $show = shift;
 	$shows{ $show->{id} } = $show;
+	$programNames{ $show->{programId} } = $show->{program} if $show->{programId};
 	$cache->set('kexp:show:' . $show->{id}, $show, '30 days');
 }
 
@@ -135,6 +137,30 @@ sub recentShows {
 
 		$cb->(\@list);
 	}, 300);
+}
+
+# Still playable? The archive drops a show 14 days after it started; keep a
+# margin so nothing in a (cached) menu expires while you're looking at it.
+use constant EXPIRY_MARGIN => 30 * 60;
+
+sub isArchived {
+	my ($class, $show) = @_;
+	return !$show->{live} && $show->{start} > time() - ARCHIVE_DAYS * 86400 + EXPIRY_MARGIN;
+}
+
+# Newest archived show of a program (for kexp://program/<id>/latest)
+sub latestShowForProgram {
+	my ($class, $programId, $cb) = @_;
+
+	$class->recentShows(sub {
+		my ($show) = grep { ($_->{programId} || 0) == $programId && $class->isArchived($_) } @{ shift() || [] };
+		$cb->($show);
+	});
+}
+
+sub programName {
+	my ($class, $programId) = @_;
+	return $programNames{$programId};
 }
 
 sub cachedShow {
@@ -181,6 +207,37 @@ sub getArchiveFile {
 			offset => $offset > 0 ? $offset : 0,
 		});
 	}, 86400);
+}
+
+# What's on air: (latest play, current show), both normalised; either may be undef
+sub nowPlaying {
+	my ($class, $cb) = @_;
+
+	my ($play, $show, $pending) = (undef, undef, 2);
+	my $done = sub { $cb->($play, $show) unless --$pending };
+
+	_get(BASE . '/v2/plays/?format=json&limit=1', sub {
+		my $data = shift;
+		if (my $raw = $data && $data->{results} && $data->{results}->[0]) {
+			$play = {
+				start  => scalar parseTime($raw->{airdate}),
+				type   => $raw->{play_type} || '',
+				artist => $raw->{artist},
+				song   => $raw->{song},
+				album  => $raw->{album},
+				image  => $raw->{image_uri} || $raw->{thumbnail_uri},
+			};
+		}
+		$done->();
+	});
+
+	_get(BASE . '/v2/shows/?format=json&limit=1', sub {
+		my $data = shift;
+		if (my $raw = $data && $data->{results} && $data->{results}->[0]) {
+			$show = _normalizeShow($raw);
+		}
+		$done->();
+	});
 }
 
 sub cachedPlays {

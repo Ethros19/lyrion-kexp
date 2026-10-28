@@ -6,14 +6,14 @@
 
 A [Lyrion Music Server](https://lyrion.org) plugin for [KEXP](https://kexp.org): the live stream, every show from the last two weeks of the archive, and every Live on KEXP session.
 
-- **Listen Live** — the 160 kbps AAC stream
+- **Listen Live** — the 160 kbps AAC stream, with the current song, album art, show and DJ from KEXP's playlist
 - **Live on KEXP** — every studio session from the podcast (2013 → now): latest 50, by year, or search by artist. Each session shows its description and setlist (found for ~96% of sessions)
 - **Recent Shows** — browse by day (station time, Pacific)
-- **Programs** — browse by program (Audioasis, Wo' Pop, Expansions, …)
+- **Programs** — browse by program (Audioasis, Wo' Pop, Expansions, …). Each has a **Latest Episode** entry that always plays the newest show: favourite it, or use it for an alarm
 - **Genres** — archive shows grouped by genre (Jazz, Hip Hop, Metal, Post-Punk & Synth, …), built from KEXP's program tags
 - Each show opens to its tracklist. Play the whole show, or jump straight in at any song.
 - While an archived show plays, now-playing shows the song that was on air at that moment (title, artist, album art), pulled from KEXP's playlist data.
-- Seeking works: archive shows are plain seekable MP3s.
+- Archive shows start at 0:00 and run the length of the show (the archive's 10-minute lead-in is hidden), and seeking works.
 - **Donate to KEXP** — opens kexp.org/donate in Material Skin; other players show the address.
 - **Settings → Plugins → KEXP** shows the installed version, with Donate and project links.
 
