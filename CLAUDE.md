@@ -1,0 +1,30 @@
+# KEXP for Lyrion
+
+Lyrion Music Server (LMS) plugin: KEXP live stream + the two-week show archive.
+
+## Layout
+- `src/KEXP/` — the plugin itself (installs as `Plugins/KEXP/`, package prefix `Plugins::KEXP::`)
+  - `Plugin.pm` — OPML menus (Live, Recent Shows by day, Programs, per-show tracklist)
+  - `ProtocolHandler.pm` — `kexp://show/<id>[/<secondsIntoShow>]` → archive MP3 + start offset; dynamic now-playing via `getMetadataFor`
+  - `API.pm` — async api.kexp.org client + caching
+  - `Util.pm` — pure time/format helpers (unit tested)
+- `tests/` — `prove tests/` (only Util is testable outside LMS)
+- `scripts/dev-server.sh` — Docker LMS on :9000 with the plugin mounted read-only; `docker restart kexp-lms` to reload code
+- `scripts/test-player.sh` — headless squeezelite in Docker (plays faster than real time); `scripts/lms.sh` — JSON-RPC helper
+- `scripts/build.sh` — zip to `dist/`
+
+## Gotchas
+- `/v2/plays/` always returns a `next` link, even past the end — `_getAll` stops on short pages.
+- Most CLI menu queries hang without a connected player; start the test player.
+- Plain-HTTP egress from containers returns 500 on this machine; HTTPS works.
+
+## KEXP archive facts (verified Oct 2026)
+- `GET https://api.kexp.org/get_streaming_url/?timestamp=<ISO UTC>` → `{sg-url, sg-url-next, sg-offset}`
+- One static MP3 per show on `kexp-archive.streamguys1.com`, spanning show start − 10 min → show end. 128 kbps CBR, byte-range seekable, downloads far faster than real time. `bitrate` param is ignored.
+- Archive depth ≈ 14 days; older timestamps return no `sg-url`.
+- `/v2/shows/` has no program filter (params ignored) — fetch the whole window (`limit=500`) and group client-side.
+- `/v2/plays/?show_ids=<id>` works; `play_type` is `trackplay` or `airbreak`.
+- Times carry the station's Pacific offset; menus display station wall-clock time.
+
+## No secrets
+The KEXP API is public and unauthenticated; there is no `.env`.

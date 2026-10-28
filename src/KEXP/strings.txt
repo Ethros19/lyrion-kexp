@@ -1,0 +1,29 @@
+PLUGIN_KEXP
+	EN	KEXP
+
+PLUGIN_KEXP_DESC
+	EN	Listen to KEXP live, or play any show from the last two weeks of the KEXP archive.
+
+PLUGIN_KEXP_LIVE
+	EN	Listen Live
+
+PLUGIN_KEXP_RECENT
+	EN	Recent Shows
+
+PLUGIN_KEXP_PROGRAMS
+	EN	Programs
+
+PLUGIN_KEXP_TODAY
+	EN	Today
+
+PLUGIN_KEXP_YESTERDAY
+	EN	Yesterday
+
+PLUGIN_KEXP_PLAY_SHOW
+	EN	Play Full Show
+
+PLUGIN_KEXP_ERROR
+	EN	Couldn't reach KEXP. Try again in a bit.
+
+PLUGIN_KEXP_NOT_ARCHIVED
+	EN	This show is no longer in the KEXP archive (shows are kept for two weeks).
