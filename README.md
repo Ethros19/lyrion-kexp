@@ -1,6 +1,10 @@
+<p align="center">
+  <img src="src/KEXP/HTML/EN/plugins/KEXP/html/images/kexp-logo.png" width="128" alt="KEXP logo">
+</p>
+
 # KEXP for Lyrion
 
-A [Lyrion Music Server](https://lyrion.org) plugin for [KEXP](https://kexp.org): the live stream, plus every show from the last two weeks of the archive.
+A [Lyrion Music Server](https://lyrion.org) plugin for [KEXP](https://kexp.org): the live stream, every show from the last two weeks of the archive, and every Live on KEXP session.
 
 - **Listen Live** — the 160 kbps AAC stream
 - **Live on KEXP** — every studio session from the podcast (2013 → now): latest 50, by year, or search by artist
@@ -48,3 +52,14 @@ prove tests/                     # unit tests for the pure helpers
 ```
 
 See `CLAUDE.md` for notes on how the KEXP archive API behaves.
+
+## License
+
+Copyright (C) 2026 Ethan Rosch
+
+This plugin is free software, licensed under the [GNU General Public License, version 2](LICENSE)
+or (at your option) any later version, the same license family as Lyrion Music Server itself.
+
+This is an unofficial, fan-made plugin, not affiliated with or endorsed by KEXP. The KEXP name and
+logo are KEXP's, and aren't covered by this license. All audio and playlist data come from KEXP's
+public services. If you enjoy it, please [support KEXP](https://www.kexp.org/donate/).
