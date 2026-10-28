@@ -8,7 +8,8 @@ use Exporter qw(import);
 use Time::Local qw(timegm);
 
 our @EXPORT_OK = qw(parseTime isoUTC stationParts dayKey formatDay formatClock
-                    parseRfc822 parseRssItems formatDuration);
+                    parseRfc822 parseRssItems parseSessionNotes formatDuration
+                    genresForTags);
 
 my @DAYS   = qw(Sun Mon Tue Wed Thu Fri Sat);
 my @MONTHS = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
@@ -103,6 +104,99 @@ sub _xmlText {
 	return $s;
 }
 
+# <description> is CDATA-wrapped HTML in this feed, but may be entity-escaped
+sub _descHtml {
+	my $s = shift;
+	return '' unless defined $s;
+	return $1 if $s =~ /^\s*<!\[CDATA\[(.*?)\]\]>\s*$/s;
+	return _xmlText($s);
+}
+
+# LMS bundles HTML::Entities (Slim::Formats::XML uses it); fall back to the
+# XML basics if it's ever missing
+my $HAS_ENTITIES = eval { require HTML::Entities; 1 };
+
+# HTML fragment -> plain text
+sub _htmlText {
+	my $s = shift;
+	$s =~ s/<[^>]+>//g;
+	$s = $HAS_ENTITIES ? HTML::Entities::decode_entities($s) : _xmlText($s);
+	$s =~ s/\x{a0}/ /g;
+	$s =~ s/^\s+|\s+$//g;
+	$s =~ s/\s+/ /g;
+	return $s;
+}
+
+my $BOILERPLATE = qr/support the show|omnystudio|privacy information|join this channel/i;
+my $ROLE_LINE   = qr/^[^:]{1,40}:\s/;          # "Host: Cheryl Waters"
+my $DASH        = qr/\s[-\x{2013}\x{2014}]\s/;  # "Ben Gibbard - Vocals"
+
+# Session notes HTML -> ($intro, \@setlist). Episode notes have changed
+# format over the years; in order of reliability the setlist is:
+#   1. an HTML list (<ol>/<ul>), 2020 onwards
+#   2. a "Songs: A / B / C" line
+#   3. a paragraph of one title per line (<br>), between intro and credits
+#   4. inline "Recorded … - 4 songs: A, B, C." (2014-2019)
+sub parseSessionNotes {
+	my $html = shift;
+	return ('', undef) unless defined $html && length $html;
+
+	# paragraphs as lists of non-empty lines, minus podcast boilerplate
+	my @paras;
+	for my $p (split m{</?(?:p|ol|ul)\b[^>]*>}i, $html) {
+		my @lines = grep { length } map { _htmlText($_) } split m{<br\s*/?>|</li>}i, $p;
+		push @paras, \@lines if @lines && join(' ', @lines) !~ $BOILERPLATE;
+	}
+
+	my $intro = @paras ? join(' ', @{ $paras[0] }) : '';
+	my $setlist;
+
+	if ($html =~ m{<[ou]l\b[^>]*>(.*?)</[ou]l>}is) {
+		my @songs = grep { length && !/http/ && length() <= 100 }
+		            map { _htmlText($_) } $1 =~ m{<li\b[^>]*>(.*?)</li>}gis;
+		$setlist = \@songs if @songs;
+	}
+
+	if (!$setlist) {
+		for my $p (@paras) {
+			my $line = join(' / ', @$p);
+			if ($line =~ m{^\s*(?:songs|set\s*list|tracks?)\s*:\s*(.+)$}i) {
+				my @songs = grep { length } map { s/^\s+|\s+$//gr } split m{\s+/\s+}, $1;
+				if (@songs) { $setlist = \@songs; last }
+			}
+		}
+	}
+
+	if (!$setlist) {
+		for my $p (@paras[1 .. $#paras]) {
+			next if @$p < 2;
+			next if grep { length() > 80 || /http/ || $_ =~ $ROLE_LINE || /^recorded\b/i } @$p;
+			next if 2 * (grep { $_ =~ $DASH } @$p) >= @$p;
+			$setlist = [ map { s/^\d+\s*[.)]\s*//r } @$p ];
+			last;
+		}
+	}
+
+	if (!$setlist) {
+		for my $p (@paras) {
+			if (join(' ', @$p) =~ m{\d+\s+songs?\s*[:\-\x{2013}]\s*(.+?)\.?\s*$}i) {
+				my @songs = grep { length } map { s/^\s+|\s+$//gr } split /,\s*/, $1;
+				if (@songs) { $setlist = \@songs; last }
+			}
+		}
+	}
+
+	# drop a trailing run of "Name - Instrument" lines that leaked in
+	if ($setlist) {
+		my @songs = @$setlist;
+		pop @songs while @songs > 1 && $songs[-1] =~ $DASH && grep { $_ !~ $DASH } @songs[0 .. $#songs - 1];
+		$setlist = \@songs;
+	}
+
+	$intro = substr($intro, 0, 497) . '...' if length $intro > 500;
+	return ($intro, $setlist);
+}
+
 # Minimal podcast RSS parser: just what we need, and fast enough for a
 # ~5 MB feed (XML::Simple takes seconds and would block the server).
 sub parseRssItems {
@@ -133,6 +227,9 @@ sub parseRssItems {
 			$secs = ($p[0] || 0) + ($p[1] || 0) * 60 + ($p[2] || 0) * 3600;
 		}
 
+		my ($desc) = $item =~ m{<description>(.*?)</description>}s;
+		my ($intro, $setlist) = parseSessionNotes(_descHtml($desc));
+
 		push @items, {
 			title  => $title,
 			artist => $artist || $title,
@@ -140,6 +237,8 @@ sub parseRssItems {
 			image  => $image ? _xmlText($image) : undef,
 			secs   => $secs,
 			date   => parseRfc822($date),
+			intro  => $intro,
+			setlist => $setlist,
 		};
 	}
 
@@ -151,6 +250,41 @@ sub formatDuration {
 	my $secs = shift || return '';
 	my $min = int($secs / 60 + 0.5);
 	return $min < 60 ? "$min min" : sprintf('%d hr %d min', int($min / 60), $min % 60);
+}
+
+# Program tags -> browseable genres. KEXP tags every daytime show
+# "Rock, Eclectic, Variety Mix", so the generic tags are dropped when a
+# program has anything more specific, and close neighbours are merged.
+my %GENERIC = map { lc $_ => 1 } ('Rock', 'Eclectic', 'KEXP', 'DJ', 'Local', 'Live', 'Live Music');
+my %GENRE_MAP = (
+	'variety'           => 'Variety Mix',
+	'variety mix'       => 'Variety Mix',
+	'wave'              => 'Post-Punk & Synth',
+	'synth'             => 'Post-Punk & Synth',
+	'post punk'         => 'Post-Punk & Synth',
+	'ebm'               => 'Post-Punk & Synth',
+	'blues'             => 'Roots, Blues & Country',
+	'country'           => 'Roots, Blues & Country',
+	'roots'             => 'Roots, Blues & Country',
+	'rockabilly'        => 'Roots, Blues & Country',
+	'afrobeat'          => 'African & Afrobeat',
+	'african'           => 'African & Afrobeat',
+	'psychedelic'       => 'Psychedelic & Experimental',
+	'experimental'      => 'Psychedelic & Experimental',
+	'public affairs'    => 'Talk & Public Affairs',
+	'pacific northwest' => 'Northwest & Local',
+	'bay area'          => 'Northwest & Local',
+);
+
+sub genresForTags {
+	my @tags = grep { length } map { s/^\s+|\s+$//gr } split /,/, (shift // '');
+
+	my @specific = grep { !$GENERIC{ lc $_ } } @tags;
+	@specific = grep { lc($_) ne 'kexp' } @tags unless @specific;    # e.g. just "Rock"
+
+	my %seen;
+	my @genres = grep { !$seen{$_}++ } map { $GENRE_MAP{ lc $_ } || $_ } @specific;
+	return @genres ? @genres : ('Other');
 }
 
 1;

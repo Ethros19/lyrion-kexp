@@ -80,6 +80,12 @@ sub handleFeed {
 			url   => \&programMenu,
 			image => icon(),
 		},
+		{
+			name  => cstring($client, 'PLUGIN_KEXP_GENRES'),
+			type  => 'link',
+			url   => \&genreMenu,
+			image => icon(),
+		},
 		# Web UIs that understand weblink (Material) open the page; players
 		# that can't open a browser just show the address.
 		{
@@ -183,6 +189,52 @@ sub programShows {
 			map {
 				my $when = formatDay($_->{start}, $_->{tzOffset}) . ', ' . formatClock($_->{start}, $_->{tzOffset});
 				_showItem($_, $_->{host} ? "$when  $_->{host}" : $when);
+			} @shows
+		] });
+	});
+}
+
+sub genreMenu {
+	my ($client, $cb) = @_;
+
+	_withShows($client, $cb, sub {
+		my (%shows, %programs);
+		for my $show (@{ shift() }) {
+			for my $genre (@{ $show->{genres} || ['Other'] }) {
+				$shows{$genre}++;
+				$programs{$genre}{ $show->{program} }++;
+			}
+		}
+
+		$cb->({ items => [
+			map {
+				my $genre = $_;
+				{
+					name        => $genre,
+					line1       => $genre,
+					line2       => join(', ', sort keys %{ $programs{$genre} }),
+					type        => 'link',
+					url         => \&genreShows,
+					passthrough => [$genre],
+					image       => icon(),
+				}
+			}
+			# "Other" last, everything else A-Z
+			sort { ($a eq 'Other') <=> ($b eq 'Other') || lc($a) cmp lc($b) } keys %shows
+		] });
+	});
+}
+
+sub genreShows {
+	my ($client, $cb, undef, $genre) = @_;
+
+	_withShows($client, $cb, sub {
+		my @shows = grep { grep { $_ eq $genre } @{ $_->{genres} || ['Other'] } } @{ shift() };
+
+		$cb->({ items => [
+			map {
+				my $when = formatDay($_->{start}, $_->{tzOffset}) . ', ' . formatClock($_->{start}, $_->{tzOffset});
+				_showItem($_, "$when  $_->{title}");
 			} @shows
 		] });
 	});
@@ -337,26 +389,61 @@ sub _year {
 	return (gmtime($epoch))[5] + 1900;
 }
 
+sub _episodeDate {
+	my $ep = shift;
+	my $date = $ep->{date} ? formatDay($ep->{date}, 0) . ', ' . _year($ep->{date}) : '';
+	$date =~ s/^\w+ //;    # "Oct 22, 2026" - weekday is noise here
+	return $date;
+}
+
+# A session browses into its notes and setlist; "play" on it plays it
 sub _episodeItem {
 	my $ep = shift;
 
-	my $date = $ep->{date} ? formatDay($ep->{date}, 0) . ', ' . _year($ep->{date}) : '';
-	$date =~ s/^\w+ //;    # "Oct 22, 2026" - weekday is noise here
-
+	my $date = _episodeDate($ep);
 	my $info = join(' · ', grep { $_ } $date, formatDuration($ep->{secs}));
 
 	return {
-		name     => $date ? "$ep->{artist} ($date)" : $ep->{artist},
-		line1    => $ep->{artist},
-		line2    => $info,
-		title    => $ep->{artist},
-		artist   => 'Live on KEXP',
-		album    => $date,
-		type     => 'audio',
-		url      => $ep->{url},
-		image    => $ep->{image} || icon(),
-		duration => $ep->{secs},
+		name        => $date ? "$ep->{artist} ($date)" : $ep->{artist},
+		line1       => $ep->{artist},
+		line2       => $info,
+		type        => 'link',
+		url         => \&sessionMenu,
+		passthrough => [$ep->{key}],
+		play        => $ep->{url},
+		image       => $ep->{image} || icon(),
 	};
+}
+
+sub sessionMenu {
+	my ($client, $cb, undef, $key) = @_;
+
+	Plugins::KEXP::LiveOnKEXP->byKey($key, sub {
+		my $ep = shift || return $cb->({ items => [{ name => cstring($client, 'PLUGIN_KEXP_ERROR'), type => 'text' }] });
+
+		my $date = _episodeDate($ep);
+		my @items = ({
+			name     => cstring($client, 'PLUGIN_KEXP_PLAY_SESSION'),
+			line2    => join(' · ', grep { $_ } $date, formatDuration($ep->{secs})),
+			title    => $ep->{artist},
+			artist   => 'Live on KEXP',
+			album    => $date,
+			type     => 'audio',
+			url      => $ep->{url},
+			image    => $ep->{image} || icon(),
+			duration => $ep->{secs},
+		});
+
+		push @items, { name => $ep->{intro}, type => 'textarea' } if $ep->{intro};
+
+		if (my $songs = $ep->{setlist}) {
+			push @items, { name => cstring($client, 'PLUGIN_KEXP_SETLIST'), type => 'text' };
+			my $n = 0;
+			push @items, map { { name => ++$n . '. ' . $_, type => 'text' } } @$songs;
+		}
+
+		$cb->({ items => \@items });
+	});
 }
 
 1;

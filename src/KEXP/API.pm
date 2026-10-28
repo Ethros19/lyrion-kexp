@@ -15,7 +15,7 @@ use Slim::Networking::SimpleAsyncHTTP;
 use Slim::Utils::Cache;
 use Slim::Utils::Log;
 
-use Plugins::KEXP::Util qw(parseTime isoUTC);
+use Plugins::KEXP::Util qw(parseTime isoUTC genresForTags);
 
 use constant BASE         => 'https://api.kexp.org';
 use constant ARCHIVE_DAYS => 14;
@@ -98,6 +98,7 @@ sub _normalizeShow {
 		programImage => $raw->{program_image_uri},
 		start   => $start,
 		tzOffset => $offset,
+		genres  => [ genresForTags($raw->{program_tags}) ],
 	};
 }
 

@@ -16,6 +16,9 @@ Lyrion Music Server (LMS) plugin: KEXP live stream + the two-week show archive.
 - `scripts/build.sh` — zip to `dist/`
 
 ## Gotchas
+- Session setlists (`parseSessionNotes`) come from free-form episode notes in four historical formats: `<ol>/<ul>` lists (2020+), a "Songs: A / B" line, a `<br>` paragraph between intro and credits, and inline "4 songs: A, B" (2014–19). Coverage ~96%; `KEXP_FEED=… prove tests/` asserts >90%. Some notes are truncated ("Cath...") in KEXP's own feed.
+- Genres come from program `tags` via `genresForTags` (generic Rock/Eclectic dropped, neighbours merged, unknown tags pass through). Live on KEXP has no genre data.
+- Bump the `kexp:liveonkexp:vN` cache key when the parsed episode shape changes.
 - LMS/browsers cache resized icons by path: when changing an image, give it a new filename (e.g. `kexp-logo.png`), don't overwrite.
 - In CLI list mode (what LyrionJS's own look uses), LMS drops `weblink` entirely — links can't work there from the plugin side.
 - Live on KEXP enclosures redirect traffic.omny.fm → kexp-podcast.streamguys1.com; the queued track keeps the redirected URL, so metadata is matched by Omny clip id, not host.

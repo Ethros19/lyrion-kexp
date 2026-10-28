@@ -31,7 +31,16 @@ sub _clipId {
 }
 
 sub _index {
-	%byClip = map { (_clipId($_->{url}) || $_->{url}) => $_ } @{ $episodes || [] };
+	for my $ep (@{ $episodes || [] }) {
+		$ep->{key} = _clipId($ep->{url}) || $ep->{url};
+	}
+	%byClip = map { $_->{key} => $_ } @{ $episodes || [] };
+}
+
+# Look up one episode by the key used in menus (Omny clip id)
+sub byKey {
+	my ($class, $key, $cb) = @_;
+	$class->episodes(sub { $cb->($byClip{$key}) });
 }
 
 # Slim::Formats::RemoteMetadata provider, so now-playing shows the band and
@@ -67,7 +76,7 @@ sub episodes {
 		return $cb->($episodes);
 	}
 
-	if (!$episodes && (my $cached = $cache->get('kexp:liveonkexp'))) {
+	if (!$episodes && (my $cached = $cache->get('kexp:liveonkexp:v2'))) {
 		($episodes, $fetchedAt) = @$cached;
 		_index();
 		return $cb->($episodes) if time() - $fetchedAt < TTL;
@@ -81,7 +90,7 @@ sub episodes {
 		if ($list && @$list) {
 			($episodes, $fetchedAt) = ($list, time());
 			_index();
-			$cache->set('kexp:liveonkexp', [$episodes, $fetchedAt], '7 days');
+			$cache->set('kexp:liveonkexp:v2', [$episodes, $fetchedAt], '7 days');
 		}
 		# on failure fall back to whatever we had, however stale
 		my @cbs = splice @waiting;
