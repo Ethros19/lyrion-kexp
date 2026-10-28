@@ -15,6 +15,7 @@ Lyrion Music Server (LMS) plugin: KEXP live stream + the two-week show archive.
 - `scripts/dev-server.sh` — Docker LMS on :9000 with the plugin mounted read-only; `docker restart kexp-lms` to reload code
 - `scripts/test-player.sh` — headless squeezelite in Docker (plays faster than real time); `scripts/lms.sh` — JSON-RPC helper
 - `scripts/build.sh` — zip to `dist/`
+- `scripts/installs.sh` — install counts (Lyrion community stats + GitHub release downloads)
 - `scripts/smoke.py` — checks the KEXP services behave as the plugin assumes (run weekly in CI; locally on python.org Python use `SSL_CERT_FILE=/etc/ssl/cert.pem`)
 
 ## Gotchas
