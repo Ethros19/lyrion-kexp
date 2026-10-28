@@ -28,6 +28,11 @@ sub initPlugin {
 		kexp => 'Plugins::KEXP::ProtocolHandler'
 	);
 
+	if (main::WEBUI) {
+		require Plugins::KEXP::Settings;
+		Plugins::KEXP::Settings->new;
+	}
+
 	Slim::Formats::RemoteMetadata->registerProvider(
 		# Omny clip urls, before (traffic.omny.fm) and after (streamguys) redirect
 		match => qr{^https?://[^/]+/d/clips/[^/]+/[^/]+/[0-9a-f-]{36}/}i,

@@ -57,6 +57,8 @@ sub metadataProvider {
 	};
 }
 
+sub count { scalar @{ $episodes || [] } }
+
 # Newest-first list of { artist, title, date, url, image, secs }
 sub episodes {
 	my ($class, $cb) = @_;

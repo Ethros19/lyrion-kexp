@@ -1,0 +1,20 @@
+[% PROCESS settings/header.html %]
+
+	[% WRAPPER setting title="PLUGIN_KEXP_VERSION" desc="" %]
+		<strong>[% kexpVersion | html %]</strong>
+	[% END %]
+
+	[% WRAPPER setting title="PLUGIN_KEXP" desc="" %]
+		[% "PLUGIN_KEXP_DESC" | string %]
+		[% IF kexpSessions %]<br><br>[% "PLUGIN_KEXP_SESSIONS_LOADED" | string %]: [% kexpSessions | html %][% END %]
+	[% END %]
+
+	[% WRAPPER setting title="PLUGIN_KEXP_SUPPORT" desc="" %]
+		<a href="[% kexpDonate | html %]" target="_blank" rel="noopener">[% "PLUGIN_KEXP_DONATE_LINK" | string %]</a>
+	[% END %]
+
+	[% WRAPPER setting title="PLUGIN_KEXP_PROJECT" desc="" %]
+		<a href="[% kexpProject | html %]" target="_blank" rel="noopener">[% kexpProject | html %]</a>
+	[% END %]
+
+[% PROCESS settings/footer.html %]

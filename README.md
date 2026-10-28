@@ -10,6 +10,7 @@ A [Lyrion Music Server](https://lyrion.org) plugin for [KEXP](https://kexp.org):
 - While an archived show plays, now-playing shows the song that was on air at that moment (title, artist, album art), pulled from KEXP's playlist data.
 - Seeking works: archive shows are plain seekable MP3s.
 - **Donate to KEXP** — opens kexp.org/donate in Material Skin; other players show the address.
+- **Settings → Plugins → KEXP** shows the installed version, with Donate and project links.
 
 ## Works with LyrionJS
 
@@ -17,7 +18,7 @@ Tested with [LyrionJS](https://github.com/JameZUK/LyrionJS) (browser as player, 
 start offsets and seeking), Live on KEXP sessions, and the live AAC stream all play through LMS's proxied
 streaming, and the menus work in LyrionJS's own look as well as in Material Skin. One difference: in
 LyrionJS's own look, *Donate* shows the address as text rather than a link (its plugin lists don't support
-links); in Material Skin it opens the page.
+links); in Material Skin it opens the page, and the plugin's settings page always has a working Donate link.
 
 ## Install
 

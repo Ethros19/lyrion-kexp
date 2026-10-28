@@ -39,3 +39,18 @@ PLUGIN_KEXP_ERROR
 
 PLUGIN_KEXP_NOT_ARCHIVED
 	EN	This show is no longer in the KEXP archive (shows are kept for two weeks).
+
+PLUGIN_KEXP_VERSION
+	EN	Version
+
+PLUGIN_KEXP_SUPPORT
+	EN	Support KEXP
+
+PLUGIN_KEXP_DONATE_LINK
+	EN	Donate to KEXP at kexp.org/donate
+
+PLUGIN_KEXP_PROJECT
+	EN	Project page
+
+PLUGIN_KEXP_SESSIONS_LOADED
+	EN	Live on KEXP sessions loaded
