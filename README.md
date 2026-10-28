@@ -11,9 +11,19 @@ A [Lyrion Music Server](https://lyrion.org) plugin for [KEXP](https://kexp.org):
 
 ## Install
 
-**From a zip:** `./scripts/build.sh`, then unzip `dist/KEXP-*.zip` into your LMS `Plugins` folder
-(e.g. `<cachedir>/InstalledPlugins/Plugins/` or, on Docker images, `/config/cache/Plugins/`) and restart LMS.
-Enable it under *Settings → Manage Plugins* if needed. It shows up under **Radio** / **My Apps**.
+In Lyrion: *Settings → Manage Plugins*, scroll to the bottom, and add this repository URL:
+
+```
+https://raw.githubusercontent.com/Ethros19/lyrion-kexp/main/repo.xml
+```
+
+Save, find **KEXP** in the plugin list, tick it, apply, and restart when prompted. It shows up under **Radio** / **My Apps**.
+Updates appear in the same place after a new release.
+
+## Release
+
+Bump `<version>` in `src/KEXP/install.xml`, commit, then `./scripts/release.sh`
+(builds the zip, regenerates `repo.xml`, tags, pushes, and creates the GitHub release).
 
 ## Develop
 

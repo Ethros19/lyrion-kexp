@@ -1,11 +1,37 @@
 #!/usr/bin/env bash
-# Package the plugin as dist/KEXP-<version>.zip (+ sha1) for manual install
-# or a custom repo.xml.
+# Package the plugin as dist/KEXP-<version>.zip (files at zip root, the
+# layout LMS repo installs expect) and regenerate repo.xml to point at the
+# matching GitHub release asset.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+
+REPO=Ethros19/lyrion-kexp
 version=$(sed -n 's:.*<version>\(.*\)</version>.*:\1:p' src/KEXP/install.xml)
+zip="dist/KEXP-$version.zip"
+
 mkdir -p dist
-rm -f "dist/KEXP-$version.zip"
-(cd src && zip -qr "../dist/KEXP-$version.zip" KEXP -x '*.DS_Store')
-shasum "dist/KEXP-$version.zip" | cut -d' ' -f1 > "dist/KEXP-$version.zip.sha1"
-echo "dist/KEXP-$version.zip ($(cat dist/KEXP-$version.zip.sha1))"
+rm -f "$zip"
+(cd src/KEXP && zip -qr "../../$zip" . -x '*.DS_Store')
+sha=$(shasum "$zip" | cut -d' ' -f1)
+
+cat > repo.xml <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<extensions>
+	<details>
+		<title lang="EN">KEXP</title>
+	</details>
+	<plugins>
+		<plugin name="KEXP" version="$version" minTarget="8.0" maxTarget="*">
+			<title lang="EN">KEXP</title>
+			<desc lang="EN">Listen to KEXP live, or play any show from the last two weeks of the KEXP archive.</desc>
+			<creator>Ethan Rosch</creator>
+			<category>radio</category>
+			<link>https://github.com/$REPO</link>
+			<url>https://github.com/$REPO/releases/download/v$version/KEXP-$version.zip</url>
+			<sha>$sha</sha>
+		</plugin>
+	</plugins>
+</extensions>
+EOF
+
+echo "$zip ($sha)"
