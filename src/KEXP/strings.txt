@@ -83,4 +83,16 @@ PLUGIN_KEXP_MENU_APPS
 	EN	My Apps
 
 PLUGIN_KEXP_RESTART_NEEDED
-	EN	Restart Lyrion Music Server to move KEXP to its new menu.
+	EN	Restart Lyrion Music Server to apply this change everywhere.
+
+PLUGIN_KEXP_ICON_STYLE
+	EN	Icon
+
+PLUGIN_KEXP_ICON_STYLE_DESC
+	EN	For Material Skin: a monochrome KEXP icon that follows its light and dark themes, or the orange logo. Material always shows Radio icons in monochrome, so the orange logo needs KEXP in My Apps. Other skins always show the orange logo. Takes effect after Lyrion restarts.
+
+PLUGIN_KEXP_ICON_AUTO
+	EN	Monochrome in Material Skin
+
+PLUGIN_KEXP_ICON_ORANGE
+	EN	Orange logo

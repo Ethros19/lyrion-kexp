@@ -21,14 +21,14 @@ sub page {
 }
 
 sub prefs {
-	return ($prefs, qw(menuLocation));
+	return ($prefs, qw(menuLocation iconStyle));
 }
 
 sub handler {
 	my ($class, $client, $params, $callback, @args) = @_;
 
-	# menus are registered at startup: say so when the location changes
-	if ($params->{saveSettings} && ($params->{pref_menuLocation} || '') ne $prefs->get('menuLocation')) {
+	# menus (and their icon) are registered at startup: say so on a change
+	if ($params->{saveSettings} && grep { defined $params->{"pref_$_"} && $params->{"pref_$_"} ne $prefs->get($_) } qw(menuLocation iconStyle)) {
 		$params->{warning} = Slim::Utils::Strings::string('PLUGIN_KEXP_RESTART_NEEDED');
 	}
 

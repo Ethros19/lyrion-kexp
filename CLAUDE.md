@@ -20,6 +20,7 @@ Lyrion Music Server (LMS) plugin: KEXP live stream + the two-week show archive.
 
 ## Gotchas
 - Material icon: the PNG is named `kexp-logo_svg.png` so Material swaps in `kexp-logo.svg` (same dir, 24×24, all fills/strokes `#000`, ≥2 px margin) and recolours it per theme. Other skins use the PNG. See github.com/CDrummond/lms-material/wiki/10-Icons.
+- Icon style pref `iconStyle` (`auto`|`orange`): `Plugin::_pluginDataFor` returns `kexp-logo-orange.png` (same PNG, name Material won't remap) only when `orange` AND `menuLocation` is `apps` — Material forces Radio top-level icons to monochrome (`mapIcon` fallback `radio-station` in browse-resp.js), so in Radio the `_svg` mapping is the better result.
 - Menu location (`plugin.kexp` pref `menuLocation`: `radio`|`apps`) is read once at startup (OPMLBased `is_app`); changing it needs an LMS restart, which the settings page says.
 - Session setlists (`parseSessionNotes`) come from free-form episode notes in four historical formats: `<ol>/<ul>` lists (2020+), a "Songs: A / B" line, a `<br>` paragraph between intro and credits, and inline "4 songs: A, B" (2014–19). Coverage ~96%; `KEXP_FEED=… prove tests/` asserts >90%. Some notes are truncated ("Cath...") in KEXP's own feed.
 - Genres come from program `tags` via `genresForTags` (generic Rock/Eclectic dropped, neighbours merged, unknown tags pass through). Live on KEXP has no genre data.

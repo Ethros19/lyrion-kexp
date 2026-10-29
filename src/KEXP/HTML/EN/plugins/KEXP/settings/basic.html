@@ -11,6 +11,13 @@
 		</select>
 	[% END %]
 
+	[% WRAPPER setting title="PLUGIN_KEXP_ICON_STYLE" desc="PLUGIN_KEXP_ICON_STYLE_DESC" %]
+		<select name="pref_iconStyle" class="stdedit">
+			<option value="auto" [% IF prefs.pref_iconStyle != 'orange' %]selected[% END %]>[% "PLUGIN_KEXP_ICON_AUTO" | string %]</option>
+			<option value="orange" [% IF prefs.pref_iconStyle == 'orange' %]selected[% END %]>[% "PLUGIN_KEXP_ICON_ORANGE" | string %]</option>
+		</select>
+	[% END %]
+
 	[% WRAPPER setting title="PLUGIN_KEXP" desc="" %]
 		[% "PLUGIN_KEXP_DESC" | string %]
 		[% IF kexpSessions %]<br><br>[% "PLUGIN_KEXP_SESSIONS_LOADED" | string %]: [% kexpSessions | html %][% END %]

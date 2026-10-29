@@ -30,7 +30,7 @@ sub initPlugin {
 
 	# Radio by default, where people look for stations; My Apps on request.
 	# Menus are registered once at startup, so a change needs a restart.
-	$prefs->init({ menuLocation => 'radio' });
+	$prefs->init({ menuLocation => 'radio', iconStyle => 'auto' });
 
 	Slim::Player::ProtocolHandlers->registerHandler(
 		kexp => 'Plugins::KEXP::ProtocolHandler'
@@ -64,6 +64,23 @@ sub initPlugin {
 sub getDisplayName { 'PLUGIN_KEXP' }
 
 sub icon { __PACKAGE__->_pluginDataFor('icon') }
+
+# install.xml's icon is the "_svg" one, which Material Skin swaps for a
+# monochrome SVG it recolours per theme (other skins show the orange PNG).
+# "orange" uses the same PNG under a name Material leaves alone - but only
+# in My Apps: Material forces Radio-menu icons to monochrome and would fall
+# back to a generic radio symbol, so in Radio the KEXP SVG is the better
+# monochrome. Every icon lookup comes through here, including OPMLBased's
+# (once, at startup).
+use constant ORANGE_ICON => 'plugins/KEXP/html/images/kexp-logo-orange.png';
+
+sub _pluginDataFor {
+	my ($class, $key) = @_;
+	return ORANGE_ICON if $key eq 'icon'
+		&& ($prefs->get('iconStyle') || '') eq 'orange'
+		&& ($prefs->get('menuLocation') || '') eq 'apps';
+	return $class->SUPER::_pluginDataFor($key);
+}
 
 sub handleFeed {
 	my ($client, $cb) = @_;
