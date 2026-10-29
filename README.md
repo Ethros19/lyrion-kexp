@@ -16,7 +16,7 @@ A [Lyrion Music Server](https://lyrion.org) plugin for [KEXP](https://kexp.org):
 - Archive shows start at 0:00 and run the length of the show (the archive's 10-minute lead-in is hidden), and seeking works.
 - **Donate to KEXP** — opens kexp.org/donate in Material Skin; other players show the address.
 - **Settings → Plugins → KEXP** shows the installed version, with Donate and project links, and lets you choose whether KEXP appears under **Radio** (default) or **My Apps**.
-- A monochrome icon for Material Skin that follows its light and dark themes, or the orange logo if you prefer (settings). Material always draws Radio icons in monochrome, so the orange logo shows in Material when KEXP is in My Apps. Other skins use the orange logo.
+- A monochrome icon for Material Skin that follows its light and dark themes. If KEXP is in My Apps, you can choose the orange logo there instead. In Radio, Material always uses monochrome icons; other skins always use the orange logo.
 
 ## Works with LyrionJS
 
