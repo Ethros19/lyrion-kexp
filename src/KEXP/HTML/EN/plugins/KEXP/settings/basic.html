@@ -4,6 +4,13 @@
 		<strong>[% kexpVersion | html %]</strong>
 	[% END %]
 
+	[% WRAPPER setting title="PLUGIN_KEXP_MENU_LOCATION" desc="PLUGIN_KEXP_MENU_LOCATION_DESC" %]
+		<select name="pref_menuLocation" class="stdedit">
+			<option value="radio" [% IF prefs.pref_menuLocation != 'apps' %]selected[% END %]>[% "PLUGIN_KEXP_MENU_RADIO" | string %]</option>
+			<option value="apps" [% IF prefs.pref_menuLocation == 'apps' %]selected[% END %]>[% "PLUGIN_KEXP_MENU_APPS" | string %]</option>
+		</select>
+	[% END %]
+
 	[% WRAPPER setting title="PLUGIN_KEXP" desc="" %]
 		[% "PLUGIN_KEXP_DESC" | string %]
 		[% IF kexpSessions %]<br><br>[% "PLUGIN_KEXP_SESSIONS_LOADED" | string %]: [% kexpSessions | html %][% END %]

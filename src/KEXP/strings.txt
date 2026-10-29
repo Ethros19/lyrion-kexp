@@ -69,3 +69,18 @@ PLUGIN_KEXP_LATEST_EPISODE
 
 PLUGIN_KEXP_LATEST_HINT
 	EN	Always the newest show. Favourite it, or use it for an alarm.
+
+PLUGIN_KEXP_MENU_LOCATION
+	EN	Show KEXP in
+
+PLUGIN_KEXP_MENU_LOCATION_DESC
+	EN	Where KEXP appears in your menus. Changes take effect after Lyrion restarts.
+
+PLUGIN_KEXP_MENU_RADIO
+	EN	Radio
+
+PLUGIN_KEXP_MENU_APPS
+	EN	My Apps
+
+PLUGIN_KEXP_RESTART_NEEDED
+	EN	Restart Lyrion Music Server to move KEXP to its new menu.

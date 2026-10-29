@@ -6,7 +6,11 @@ package Plugins::KEXP::Settings;
 use strict;
 use base qw(Slim::Web::Settings);
 
+use Slim::Utils::Prefs;
+
 use Plugins::KEXP::LiveOnKEXP;
+
+my $prefs = preferences('plugin.kexp');
 
 sub name {
 	return Slim::Web::HTTP::CSRF->protectName('PLUGIN_KEXP');
@@ -14,6 +18,21 @@ sub name {
 
 sub page {
 	return Slim::Web::HTTP::CSRF->protectURI('plugins/KEXP/settings/basic.html');
+}
+
+sub prefs {
+	return ($prefs, qw(menuLocation));
+}
+
+sub handler {
+	my ($class, $client, $params, $callback, @args) = @_;
+
+	# menus are registered at startup: say so when the location changes
+	if ($params->{saveSettings} && ($params->{pref_menuLocation} || '') ne $prefs->get('menuLocation')) {
+		$params->{warning} = Slim::Utils::Strings::string('PLUGIN_KEXP_RESTART_NEEDED');
+	}
+
+	return $class->SUPER::handler($client, $params, $callback, @args);
 }
 
 sub beforeRender {

@@ -3,11 +3,11 @@
 	<id>KEXP</id>
 	<name>PLUGIN_KEXP</name>
 	<module>Plugins::KEXP::Plugin</module>
-	<version>0.5.0</version>
+	<version>0.6.0</version>
 	<description>PLUGIN_KEXP_DESC</description>
 	<creator>Ethan Rosch</creator>
 	<category>radio</category>
-	<icon>plugins/KEXP/html/images/kexp-logo.png</icon>
+	<icon>plugins/KEXP/html/images/kexp-logo_svg.png</icon>
 	<optionsURL>plugins/KEXP/settings/basic.html</optionsURL>
 	<type>2</type><!-- type=extension -->
 	<targetApplication>

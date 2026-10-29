@@ -15,7 +15,8 @@ A [Lyrion Music Server](https://lyrion.org) plugin for [KEXP](https://kexp.org):
 - While an archived show plays, now-playing shows the song that was on air at that moment (title, artist, album art), pulled from KEXP's playlist data.
 - Archive shows start at 0:00 and run the length of the show (the archive's 10-minute lead-in is hidden), and seeking works.
 - **Donate to KEXP** — opens kexp.org/donate in Material Skin; other players show the address.
-- **Settings → Plugins → KEXP** shows the installed version, with Donate and project links.
+- **Settings → Plugins → KEXP** shows the installed version, with Donate and project links, and lets you choose whether KEXP appears under **Radio** (default) or **My Apps**.
+- A monochrome icon for Material Skin that follows its light and dark themes (other skins use the orange logo).
 
 ## Works with LyrionJS
 
@@ -32,7 +33,7 @@ In Lyrion: *Settings → Manage Plugins*, scroll to the bottom, and add this rep
 https://raw.githubusercontent.com/Ethros19/lyrion-kexp/main/repo.xml
 ```
 
-Save, find **KEXP** in the plugin list, tick it, apply, and restart when prompted. It shows up under **Radio** / **My Apps**.
+Save, find **KEXP** in the plugin list, tick it, apply, and restart when prompted. It shows up under **Radio** (switchable to My Apps in its settings).
 Updates appear in the same place after a new release.
 
 ## Release

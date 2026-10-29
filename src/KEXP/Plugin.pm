@@ -5,6 +5,7 @@ use utf8;
 use base qw(Slim::Plugin::OPMLBased);
 
 use Slim::Utils::Log;
+use Slim::Utils::Prefs;
 use Slim::Utils::Strings qw(cstring);
 
 use Plugins::KEXP::API;
@@ -22,8 +23,14 @@ my $log = Slim::Utils::Log->addLogCategory({
 	description  => 'PLUGIN_KEXP',
 });
 
+my $prefs = preferences('plugin.kexp');
+
 sub initPlugin {
 	my $class = shift;
+
+	# Radio by default, where people look for stations; My Apps on request.
+	# Menus are registered once at startup, so a change needs a restart.
+	$prefs->init({ menuLocation => 'radio' });
 
 	Slim::Player::ProtocolHandlers->registerHandler(
 		kexp => 'Plugins::KEXP::ProtocolHandler'
@@ -49,7 +56,7 @@ sub initPlugin {
 		feed   => \&handleFeed,
 		tag    => 'kexp',
 		menu   => 'radios',
-		is_app => 1,
+		is_app => ($prefs->get('menuLocation') eq 'apps' ? 1 : 0),
 		weight => 10,
 	);
 }
