@@ -6,6 +6,7 @@ use base qw(Slim::Plugin::OPMLBased);
 
 use Slim::Utils::Log;
 use Slim::Utils::Prefs;
+use Slim::Utils::Favorites;
 use Slim::Utils::Strings qw(cstring);
 
 use Plugins::KEXP::API;
@@ -88,8 +89,15 @@ sub handleFeed {
 	$cb->({ items => [
 		{
 			name  => cstring($client, 'PLUGIN_KEXP_LIVE'),
+			favorites_title => 'KEXP Live',
 			type  => 'audio',
 			url   => LIVE_URL,
+			image => icon(),
+		},
+		{
+			name  => cstring($client, 'PLUGIN_KEXP_MY_FAVORITES'),
+			type  => 'link',
+			url   => \&favoritesMenu,
 			image => icon(),
 		},
 		{
@@ -203,6 +211,11 @@ sub programMenu {
 					url         => \&programShows,
 					passthrough => [$_],
 					image       => $list->[0]->{programImage} || icon(),
+					# favouriting (or playing) a program means its newest show
+					($list->[0]->{programId} ? (
+						play            => Plugins::KEXP::ProtocolHandler->latestUrl($list->[0]->{programId}),
+						favorites_title => "$_ (" . cstring($client, 'PLUGIN_KEXP_LATEST_EPISODE') . ')',
+					) : ()),
 				}
 			} sort { lc($a) cmp lc($b) } keys %programs
 		] });
@@ -298,6 +311,7 @@ sub _showItem {
 		passthrough => [$show->{id}],
 		play        => "kexp://show/$show->{id}",
 		image       => $show->{image} || icon(),
+		favorites_title => "$show->{title} (" . formatDay($show->{start}, $show->{tzOffset}) . ')',
 	};
 }
 
@@ -312,6 +326,7 @@ sub showMenu {
 
 			my @items = ({
 				name  => cstring($client, 'PLUGIN_KEXP_PLAY_SHOW'),
+				favorites_title => "$show->{title} (" . formatDay($show->{start}, $show->{tzOffset}) . ')',
 				type  => 'audio',
 				url   => "kexp://show/$id",
 				image => $show->{image} || icon(),
@@ -330,6 +345,7 @@ sub showMenu {
 					line2 => join(' - ', grep { $_ } $play->{artist}, $play->{album}),
 					type  => 'audio',
 					url   => "kexp://show/$id/$from",
+					favorites_title => "$label (" . $show->{title} . ', ' . formatDay($show->{start}, $show->{tzOffset}) . ')',
 					image => $play->{image} || $show->{image} || icon(),
 				};
 			}
@@ -337,6 +353,67 @@ sub showMenu {
 			$cb->({ items => \@items });
 		});
 	});
+}
+
+# --- My Favorites ----------------------------------------------------------
+# KEXP entries from Lyrion's own Favorites (so they also work as presets,
+# alarms and in every other app), gathered here in one place.
+
+sub _isKexpUrl {
+	my $url = shift || return;
+	return $url =~ m{^kexp://}
+		|| $url =~ Plugins::KEXP::Live::URL_MATCH
+		|| $url =~ m{/d/clips/[^/]+/[^/]+/[0-9a-f-]{36}/}i;    # Live on KEXP sessions
+}
+
+sub _kexpFavorites {
+	my ($level, $found) = @_;
+	for my $entry (@{ $level || [] }) {
+		my $url = $entry->{URL} || $entry->{url};
+		push @$found, $entry if $url && _isKexpUrl($url) && ($entry->{type} || 'audio') =~ /audio|playlist/;
+		_kexpFavorites($entry->{outline}, $found) if $entry->{outline};
+	}
+	return $found;
+}
+
+sub favoritesMenu {
+	my ($client, $cb) = @_;
+
+	my $favs = Slim::Utils::Favorites->new($client);
+	my $found = $favs ? _kexpFavorites($favs->toplevel, []) : [];
+
+	if (!@$found) {
+		return $cb->({ items => [{
+			name => cstring($client, 'PLUGIN_KEXP_NO_FAVORITES'),
+			type => 'textarea',
+		}] });
+	}
+
+	my $render = sub {
+		$cb->({ items => [
+			map {
+				my $url   = $_->{URL} || $_->{url};
+				my $title = $_->{text} || $_->{title} || $url;
+				my ($showId) = $url =~ m{^kexp://show/(\d+)};
+				my $show = $showId && Plugins::KEXP::API->cachedShow($showId);
+
+				# dated shows drop out of KEXP's archive after two weeks
+				$show && !Plugins::KEXP::API->isArchived($show)
+					? { name => "$title - " . cstring($client, 'PLUGIN_KEXP_EXPIRED'), type => 'text' }
+					: { name => $title, type => 'audio', url => $url, image => $_->{icon} || icon() };
+			} @$found
+		] });
+	};
+
+	# look up any favourite shows we haven't seen, so expiry is known
+	my %seen;
+	my @unknown = grep { !$seen{$_}++ && !Plugins::KEXP::API->cachedShow($_) }
+	              map { ($_->{URL} || $_->{url} || '') =~ m{^kexp://show/(\d+)} ? $1 : () } @$found;
+
+	return $render->() unless @unknown;
+
+	my $pending = @unknown;
+	Plugins::KEXP::API->getShow($_, sub { $render->() unless --$pending }) for @unknown;
 }
 
 # --- Live on KEXP ---------------------------------------------------------
@@ -456,6 +533,7 @@ sub _episodeItem {
 		url         => \&sessionMenu,
 		passthrough => [$ep->{key}],
 		play        => $ep->{url},
+		favorites_title => "$ep->{artist} - Live on KEXP" . ($date ? " ($date)" : ''),
 		image       => $ep->{image} || icon(),
 	};
 }
@@ -469,6 +547,7 @@ sub sessionMenu {
 		my $date = _episodeDate($ep);
 		my @items = ({
 			name     => cstring($client, 'PLUGIN_KEXP_PLAY_SESSION'),
+			favorites_title => "$ep->{artist} - Live on KEXP" . ($date ? " ($date)" : ''),
 			line2    => join(' · ', grep { $_ } $date, formatDuration($ep->{secs})),
 			title    => $ep->{artist},
 			artist   => 'Live on KEXP',

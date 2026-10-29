@@ -19,6 +19,7 @@ Lyrion Music Server (LMS) plugin: KEXP live stream + the two-week show archive.
 - `scripts/smoke.py` — checks the KEXP services behave as the plugin assumes (run weekly in CI; locally on python.org Python use `SSL_CERT_FILE=/etc/ssl/cert.pem`)
 
 ## Gotchas
+- Favourites: Lyrion's XMLBrowser makes any playable item with a string `favorites_url`/`play`/`url` favouritable; give every playable item a `favorites_title` (otherwise it saves its menu label, e.g. "Play Full Show"). Program links carry `play => kexp://program/<id>/latest`. "My Favorites" just filters `Slim::Utils::Favorites->toplevel` for KEXP URLs (`_isKexpUrl`) — no separate store.
 - Material icon: the PNG is named `kexp-logo_svg.png` so Material swaps in `kexp-logo.svg` (same dir, 24×24, all fills/strokes `#000`, ≥2 px margin) and recolours it per theme. Other skins use the PNG. See github.com/CDrummond/lms-material/wiki/10-Icons.
 - Icon style pref `iconStyle` (`auto`|`orange`): `Plugin::_pluginDataFor` returns `kexp-logo-orange.png` (same PNG, name Material won't remap) only when `orange` AND `menuLocation` is `apps` — Material forces Radio top-level icons to monochrome (`mapIcon` fallback `radio-station` in browse-resp.js), so in Radio the `_svg` mapping is the better result.
 - Menu location (`plugin.kexp` pref `menuLocation`: `radio`|`apps`) is read once at startup (OPMLBased `is_app`); changing it needs an LMS restart, which the settings page says.

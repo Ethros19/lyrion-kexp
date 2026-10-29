@@ -6,6 +6,7 @@
 
 A [Lyrion Music Server](https://lyrion.org) plugin for [KEXP](https://kexp.org): the live stream, every show from the last two weeks of the archive, and every Live on KEXP session.
 
+- **My Favorites** — your KEXP favorites in one place. Use *Add to Favorites* on Listen Live, a program (saves its *Latest Episode*), a show, a track or a Live on KEXP session; they live in Lyrion's normal Favorites, so they also work as presets and alarms. Dated shows are flagged once they leave the two-week archive
 - **Listen Live** — the 160 kbps AAC stream, with the current song, album art, show and DJ from KEXP's playlist
 - **Live on KEXP** — every studio session from the podcast (2013 → now): latest 50, by year, or search by artist. Each session shows its description and setlist (found for ~96% of sessions)
 - **Recent Shows** — browse by day (station time, Pacific)

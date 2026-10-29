@@ -96,3 +96,12 @@ PLUGIN_KEXP_ICON_AUTO
 
 PLUGIN_KEXP_ICON_ORANGE
 	EN	Orange KEXP logo
+
+PLUGIN_KEXP_MY_FAVORITES
+	EN	My Favorites
+
+PLUGIN_KEXP_NO_FAVORITES
+	EN	No KEXP favorites yet. Use "Add to Favorites" on Listen Live, a program, a show or a Live on KEXP session, and it shows up here (and in Lyrion's Favorites). Tip: favorite a program to always get its newest show.
+
+PLUGIN_KEXP_EXPIRED
+	EN	no longer in KEXP's two-week archive
