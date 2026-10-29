@@ -228,11 +228,11 @@ sub programShows {
 		# go stale when individual shows leave the archive
 		if (@shows && $shows[0]->{programId}) {
 			push @items, {
-				name  => cstring($client, 'PLUGIN_KEXP_LATEST_EPISODE'),
+				name  => _latestFavTitle($client, $program),
 				line1 => cstring($client, 'PLUGIN_KEXP_LATEST_EPISODE'),
 				line2 => cstring($client, 'PLUGIN_KEXP_LATEST_HINT'),
-				title => "$program (" . cstring($client, 'PLUGIN_KEXP_LATEST_EPISODE') . ')',
-				favorites_title => "$program (" . cstring($client, 'PLUGIN_KEXP_LATEST_EPISODE') . ')',
+				title => _latestFavTitle($client, $program),
+				favorites_title => _latestFavTitle($client, $program),
 				type  => 'audio',
 				url   => Plugins::KEXP::ProtocolHandler->latestUrl($shows[0]->{programId}),
 				image => $shows[0]->{programImage} || icon(),
@@ -320,8 +320,10 @@ sub showMenu {
 			my $plays = shift || [];
 
 			my @items = ({
-				name  => cstring($client, 'PLUGIN_KEXP_PLAY_SHOW'),
-				favorites_title => "$show->{title} (" . formatDay($show->{start}, $show->{tzOffset}) . ')',
+				name  => _showFavTitle($show),
+				line1 => cstring($client, 'PLUGIN_KEXP_PLAY_SHOW'),
+				line2 => formatDay($show->{start}, $show->{tzOffset}) . ', ' . formatClock($show->{start}, $show->{tzOffset}),
+				favorites_title => _showFavTitle($show),
 				type  => 'audio',
 				url   => "kexp://show/$id",
 				image => $show->{image} || icon(),
@@ -385,6 +387,8 @@ sub favoritesMenu {
 	}
 
 	my $render = sub {
+		_repairFavTitles($client, $favs, $found);
+
 		$cb->({ items => [
 			map {
 				my $url   = $_->{URL} || $_->{url};
@@ -405,10 +409,55 @@ sub favoritesMenu {
 	my @unknown = grep { !$seen{$_}++ && !Plugins::KEXP::API->cachedShow($_) }
 	              map { ($_->{URL} || $_->{url} || '') =~ m{^kexp://show/(\d+)} ? $1 : () } @$found;
 
-	return $render->() unless @unknown;
+	# repairs may need session details and program names
+	my $pending = @unknown + 2;
+	my $done = sub { $render->() unless --$pending };
+	Plugins::KEXP::LiveOnKEXP->episodes($done);
+	Plugins::KEXP::API->recentShows($done);
+	Plugins::KEXP::API->getShow($_, $done) for @unknown;
+}
 
-	my $pending = @unknown;
-	Plugins::KEXP::API->getShow($_, sub { $render->() unless --$pending }) for @unknown;
+# Favourites saved under a row's generic label ("Play Session", ...) by apps
+# that ignore favorites_title get their proper name, in Lyrion's Favorites
+# itself so it shows everywhere.
+my %GENERIC_FAV_TITLE = map { $_ => 1 } qw(PLUGIN_KEXP_PLAY_SESSION PLUGIN_KEXP_PLAY_SHOW PLUGIN_KEXP_LATEST_EPISODE PLUGIN_KEXP_LIVE);
+
+sub _repairFavTitles {
+	my ($client, $favs, $found) = @_;
+
+	my %generic = map { lc(cstring($client, $_)) => 1 } keys %GENERIC_FAV_TITLE;
+	my $changed = 0;
+
+	for my $entry (@$found) {
+		my $title = $entry->{text} // '';
+		next unless $generic{ lc $title };
+
+		my $url = $entry->{URL} || $entry->{url};
+		my $better;
+
+		if ($url =~ m{^kexp://show/(\d+)}) {
+			my $show = Plugins::KEXP::API->cachedShow($1);
+			$better = _showFavTitle($show) if $show;
+		}
+		elsif ($url =~ m{^kexp://program/(\d+)/latest}) {
+			my $program = Plugins::KEXP::API->programName($1);
+			$better = _latestFavTitle($client, $program) if $program;
+		}
+		elsif ($url =~ Plugins::KEXP::Live::URL_MATCH) {
+			$better = 'KEXP Live';
+		}
+		elsif (my $ep = Plugins::KEXP::LiveOnKEXP::metadataProvider($client, $url)) {
+			# metadataProvider resolves session urls (before/after redirect)
+			$better = $ep->{title} ? "$ep->{title} - Live on KEXP" . ($ep->{album} && $ep->{album} ne 'KEXP' ? " ($ep->{album})" : '') : undef;
+		}
+
+		if ($better && $better ne $title) {
+			$entry->{text} = $better;
+			$changed++;
+		}
+	}
+
+	$favs->save if $changed && $favs->can('save');
 }
 
 # --- Live on KEXP ---------------------------------------------------------
@@ -506,6 +555,13 @@ sub _year {
 	return (gmtime($epoch))[5] + 1900;
 }
 
+# Favourite names. Some apps (LyrionJS's own look) save a favourite under the
+# row's name rather than its favorites_title, so playable rows use these as
+# their name too, with the short label ("Play Session") as line1.
+sub _showFavTitle    { my $show = shift; "$show->{title} (" . formatDay($show->{start}, $show->{tzOffset}) . ')' }
+sub _latestFavTitle  { my ($client, $program) = @_; "$program (" . cstring($client, 'PLUGIN_KEXP_LATEST_EPISODE') . ')' }
+sub _sessionFavTitle { my $ep = shift; my $date = _episodeDate($ep); "$ep->{artist} - Live on KEXP" . ($date ? " ($date)" : '') }
+
 sub _episodeDate {
 	my $ep = shift;
 	my $date = $ep->{date} ? formatDay($ep->{date}, 0) . ', ' . _year($ep->{date}) : '';
@@ -547,8 +603,9 @@ sub sessionMenu {
 		push @items, { name => $ep->{intro}, type => 'textarea' } if $ep->{intro};
 
 		push @items, {
-			name     => cstring($client, 'PLUGIN_KEXP_PLAY_SESSION'),
-			favorites_title => "$ep->{artist} - Live on KEXP" . ($date ? " ($date)" : ''),
+			name     => _sessionFavTitle($ep),
+			line1    => cstring($client, 'PLUGIN_KEXP_PLAY_SESSION'),
+			favorites_title => _sessionFavTitle($ep),
 			line2    => join(' · ', grep { $_ } $date, formatDuration($ep->{secs})),
 			title    => $ep->{artist},
 			artist   => 'Live on KEXP',
