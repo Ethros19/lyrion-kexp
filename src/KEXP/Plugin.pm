@@ -211,11 +211,6 @@ sub programMenu {
 					url         => \&programShows,
 					passthrough => [$_],
 					image       => $list->[0]->{programImage} || icon(),
-					# favouriting (or playing) a program means its newest show
-					($list->[0]->{programId} ? (
-						play            => Plugins::KEXP::ProtocolHandler->latestUrl($list->[0]->{programId}),
-						favorites_title => "$_ (" . cstring($client, 'PLUGIN_KEXP_LATEST_EPISODE') . ')',
-					) : ()),
 				}
 			} sort { lc($a) cmp lc($b) } keys %programs
 		] });
@@ -237,6 +232,7 @@ sub programShows {
 				line1 => cstring($client, 'PLUGIN_KEXP_LATEST_EPISODE'),
 				line2 => cstring($client, 'PLUGIN_KEXP_LATEST_HINT'),
 				title => "$program (" . cstring($client, 'PLUGIN_KEXP_LATEST_EPISODE') . ')',
+				favorites_title => "$program (" . cstring($client, 'PLUGIN_KEXP_LATEST_EPISODE') . ')',
 				type  => 'audio',
 				url   => Plugins::KEXP::ProtocolHandler->latestUrl($shows[0]->{programId}),
 				image => $shows[0]->{programImage} || icon(),
@@ -298,7 +294,8 @@ sub genreShows {
 	});
 }
 
-# A show browses into its tracklist, but "play" on it plays the whole show
+# A show browses into its tracklist; play/favourite it via "Play Full Show"
+# inside. (A playable link - OPML "play" - can't be opened in Material Skin.)
 sub _showItem {
 	my ($show, $label) = @_;
 
@@ -309,9 +306,7 @@ sub _showItem {
 		type        => 'link',
 		url         => \&showMenu,
 		passthrough => [$show->{id}],
-		play        => "kexp://show/$show->{id}",
 		image       => $show->{image} || icon(),
-		favorites_title => "$show->{title} (" . formatDay($show->{start}, $show->{tzOffset}) . ')',
 	};
 }
 
@@ -518,7 +513,8 @@ sub _episodeDate {
 	return $date;
 }
 
-# A session browses into its notes and setlist; "play" on it plays it
+# A session browses into its notes and setlist; play/favourite it via
+# "Play Session" inside
 sub _episodeItem {
 	my $ep = shift;
 
@@ -532,8 +528,6 @@ sub _episodeItem {
 		type        => 'link',
 		url         => \&sessionMenu,
 		passthrough => [$ep->{key}],
-		play        => $ep->{url},
-		favorites_title => "$ep->{artist} - Live on KEXP" . ($date ? " ($date)" : ''),
 		image       => $ep->{image} || icon(),
 	};
 }
@@ -545,7 +539,14 @@ sub sessionMenu {
 		my $ep = shift || return $cb->({ items => [{ name => cstring($client, 'PLUGIN_KEXP_ERROR'), type => 'text' }] });
 
 		my $date = _episodeDate($ep);
-		my @items = ({
+		my @items;
+
+		# The description goes first: Lyrion lifts a textarea into the page
+		# header and blanks the page's first item while doing so - which hid
+		# "Play Session" in Material Skin when it came first.
+		push @items, { name => $ep->{intro}, type => 'textarea' } if $ep->{intro};
+
+		push @items, {
 			name     => cstring($client, 'PLUGIN_KEXP_PLAY_SESSION'),
 			favorites_title => "$ep->{artist} - Live on KEXP" . ($date ? " ($date)" : ''),
 			line2    => join(' · ', grep { $_ } $date, formatDuration($ep->{secs})),
@@ -556,9 +557,7 @@ sub sessionMenu {
 			url      => $ep->{url},
 			image    => $ep->{image} || icon(),
 			duration => $ep->{secs},
-		});
-
-		push @items, { name => $ep->{intro}, type => 'textarea' } if $ep->{intro};
+		};
 
 		if (my $songs = $ep->{setlist}) {
 			push @items, { name => cstring($client, 'PLUGIN_KEXP_SETLIST'), type => 'text' };

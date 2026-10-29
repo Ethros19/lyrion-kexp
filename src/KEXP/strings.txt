@@ -101,7 +101,7 @@ PLUGIN_KEXP_MY_FAVORITES
 	EN	My Favorites
 
 PLUGIN_KEXP_NO_FAVORITES
-	EN	No KEXP favorites yet. Use "Add to Favorites" on Listen Live, a program, a show or a Live on KEXP session, and it shows up here (and in Lyrion's Favorites). Tip: favorite a program to always get its newest show.
+	EN	No KEXP favorites yet. Use "Add to Favorites" on Listen Live, a program's Latest Episode, a show's Play Full Show, a track, or a session's Play Session, and it shows up here (and in Lyrion's Favorites). Tip: favorite a program's Latest Episode to always get its newest show.
 
 PLUGIN_KEXP_EXPIRED
 	EN	no longer in KEXP's two-week archive
