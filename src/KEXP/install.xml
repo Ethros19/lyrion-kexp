@@ -3,7 +3,7 @@
 	<id>KEXP</id>
 	<name>PLUGIN_KEXP</name>
 	<module>Plugins::KEXP::Plugin</module>
-	<version>0.8.2</version>
+	<version>0.8.3</version>
 	<description>PLUGIN_KEXP_DESC</description>
 	<creator>Ethan Rosch</creator>
 	<category>radio</category>

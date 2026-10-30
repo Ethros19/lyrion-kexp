@@ -105,3 +105,12 @@ PLUGIN_KEXP_NO_FAVORITES
 
 PLUGIN_KEXP_EXPIRED
 	EN	no longer in KEXP's two-week archive
+
+PLUGIN_KEXP_HELP
+	EN	Help & feedback
+
+PLUGIN_KEXP_HELP_TEXT
+	EN	Something not working, or have an idea?
+
+PLUGIN_KEXP_HELP_LINK
+	EN	Open an issue on GitHub

@@ -37,6 +37,10 @@ https://raw.githubusercontent.com/Ethros19/lyrion-kexp/main/repo.xml
 Save, find **KEXP** in the plugin list, tick it, apply, and restart when prompted. It shows up under **Radio** (switchable to My Apps in its settings).
 Updates appear in the same place after a new release.
 
+## Help
+
+Something not working, or have an idea? [Open an issue](https://github.com/Ethros19/lyrion-kexp/issues). The plugin's settings page (Settings → Plugins → KEXP) links there too.
+
 ## Release
 
 Bump `<version>` in `src/KEXP/install.xml`, commit, then `./scripts/release.sh`

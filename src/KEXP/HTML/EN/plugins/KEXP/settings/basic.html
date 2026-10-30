@@ -31,4 +31,9 @@
 		<a href="[% kexpProject | html %]" target="_blank" rel="noopener">[% kexpProject | html %]</a>
 	[% END %]
 
+	[% WRAPPER setting title="PLUGIN_KEXP_HELP" desc="" %]
+		[% "PLUGIN_KEXP_HELP_TEXT" | string %]
+		<a href="[% kexpIssues | html %]" target="_blank" rel="noopener">[% "PLUGIN_KEXP_HELP_LINK" | string %]</a>
+	[% END %]
+
 [% PROCESS settings/footer.html %]

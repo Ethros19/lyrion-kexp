@@ -42,6 +42,7 @@ sub beforeRender {
 	$params->{kexpSessions} = Plugins::KEXP::LiveOnKEXP->count;
 	$params->{kexpDonate}   = Plugins::KEXP::Plugin::DONATE_URL();
 	$params->{kexpProject}  = 'https://github.com/Ethros19/lyrion-kexp';
+	$params->{kexpIssues}   = 'https://github.com/Ethros19/lyrion-kexp/issues';
 }
 
 1;
