@@ -4,7 +4,8 @@ package Plugins::KEXP::API;
 #
 # Archive layout (observed): every show has one static MP3 on the
 # streamguys CDN covering [show start - 10 min, show end], 128 kbps CBR,
-# with byte-range support. get_streaming_url tells us which file holds a
+# with byte-range support (some were ~133 kbps ADTS AAC during KEXP's
+# Oct 30 - Nov 2 2026 outage; see ProtocolHandler). get_streaming_url tells us which file holds a
 # given timestamp and the offset (seconds) into it.
 
 use strict;

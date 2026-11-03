@@ -5,7 +5,7 @@ Lyrion Music Server (LMS) plugin: KEXP live stream + the two-week show archive.
 ## Layout
 - `src/KEXP/` — the plugin itself (installs as `Plugins/KEXP/`, package prefix `Plugins::KEXP::`)
   - `Plugin.pm` — OPML menus (Live, Recent Shows by day, Programs, per-show tracklist)
-  - `ProtocolHandler.pm` — `kexp://show/<id>[/<secondsIntoShow>]` and `kexp://program/<id>/latest` → archive MP3. Pre-roll hidden: track secs/duration = show length, `getSeekData` adds `fileOffset` to every seek and reports show-relative `timeOffset`. Dynamic now-playing via `getMetadataFor`
+  - `ProtocolHandler.pm` — `kexp://show/<id>[/<secondsIntoShow>]` and `kexp://program/<id>/latest` → archive MP3 (or AAC). Pre-roll hidden: track secs/duration = show length, `getSeekData` adds `fileOffset` to every seek and reports show-relative `timeOffset`. Dynamic now-playing via `getMetadataFor`
   - `Live.pm` — live-stream now-playing (RemoteMetadata provider on the streamguys live URLs), polls plays/shows every 30 s only while a player is on live
   - `API.pm` — async api.kexp.org client + caching
   - `LiveOnKEXP.pm` — Live on KEXP podcast (Omny RSS, ~1,300 eps), cached 6 h; RemoteMetadata provider for now-playing
@@ -44,6 +44,7 @@ Lyrion Music Server (LMS) plugin: KEXP live stream + the two-week show archive.
 ## KEXP archive facts (verified Oct 2026)
 - `GET https://api.kexp.org/get_streaming_url/?timestamp=<ISO UTC>` → `{sg-url, sg-url-next, sg-offset}`
 - One static MP3 per show on `kexp-archive.streamguys1.com`, spanning show start − 10 min → show end. 128 kbps CBR, byte-range seekable, downloads far faster than real time. `bitrate` param is ignored.
+- During KEXP's Oct 30 – Nov 2 2026 outage, shows were missing, had no plays, or were ADTS AAC (`audio/aac`, 131–136 kbps, some truncated or with odd pre-rolls). LMS's remote scanner only reads an AAC stream's samplerate (no bitrate, no size), so `ProtocolHandler` HEADs the file for its size and sets bitrate/secs (`Util::aacTiming`). faad can't start mid-frame, so AAC is never direct-streamed and `sysread` trims a seek to the next verified ADTS header (`Util::adtsSync`).
 - Archive depth is exactly 14 days by timestamp (`get_streaming_url` returns nothing at 336 h). Menus hide shows within 30 min of expiry (`API::isArchived`).
 - `/v2/shows/` has no program filter (params ignored) — fetch the whole window (`limit=500`) and group client-side.
 - `/v2/plays/?show_ids=<id>` works; `play_type` is `trackplay` or `airbreak`.

@@ -9,7 +9,7 @@ use Time::Local qw(timegm);
 
 our @EXPORT_OK = qw(parseTime isoUTC stationParts dayKey formatDay formatClock
                     parseRfc822 parseRssItems parseSessionNotes formatDuration
-                    genresForTags);
+                    genresForTags aacTiming adtsSync);
 
 my @DAYS   = qw(Sun Mon Tue Wed Thu Fri Sat);
 my @MONTHS = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
@@ -285,6 +285,57 @@ sub genresForTags {
 	my %seen;
 	my @genres = grep { !$seen{$_}++ } map { $GENRE_MAP{ lc $_ } || $_ } @specific;
 	return @genres ? @genres : ('Other');
+}
+
+# Archive AAC files (seen during KEXP's Oct 30 - Nov 2 2026 outage) average
+# 131-136 kbps. Size / (pre-roll + show) gets a file's exact average, but some
+# files are truncated or span more than the show, so fall back to the typical
+# rate unless the estimate is close to it.
+# ($bytes, $showSeconds, $prerollSeconds) -> ($bitrate, $fileSeconds or undef)
+use constant AAC_BITRATE => 133_000;
+
+sub aacTiming {
+	my ($size, $length, $preroll) = @_;
+
+	my $bitrate = AAC_BITRATE;
+	if ($size && $length) {
+		my $estimate = int($size * 8 / ($preroll + $length));
+		$bitrate = $estimate if abs($estimate - AAC_BITRATE) < AAC_BITRATE * 0.05;
+	}
+
+	my $secs = $size ? $size * 8 / $bitrate : $length ? $preroll + $length : undef;
+	return ($bitrate, $secs);
+}
+
+# Offset of the first ADTS frame in $buf whose header is followed, frame
+# length later, by another matching one (0xFFF can also occur inside audio
+# data). undef if none is complete yet. A decoder handed a byte-offset seek
+# must start here.
+sub adtsSync {
+	my $buf = shift;
+	my $len = length $buf;
+
+	for (my $i = 0; $i + 7 <= $len; $i++) {
+		my $h = _adtsHeader($buf, $i) || next;
+		my $next = $i + $h->{length};
+		return undef if $next + 7 > $len;
+		my $n = _adtsHeader($buf, $next) || next;
+		return $i if $n->{rate} == $h->{rate} && $n->{channels} == $h->{channels};
+	}
+	return undef;
+}
+
+sub _adtsHeader {
+	my ($buf, $i) = @_;
+	my @b = unpack('C6', substr($buf, $i, 6));
+	return unless $b[0] == 0xFF && ($b[1] & 0xF6) == 0xF0;    # sync, layer 0
+
+	my $rate     = ($b[2] >> 2) & 0x0F;
+	my $channels = (($b[2] & 1) << 2) | ($b[3] >> 6);
+	my $length   = (($b[3] & 3) << 11) | ($b[4] << 3) | ($b[5] >> 5);
+	return unless $rate < 12 && $channels && $length >= 7;
+
+	return { rate => $rate, channels => $channels, length => $length };
 }
 
 1;

@@ -66,7 +66,8 @@ def _():
     start = datetime.fromisoformat(show["start_time"]).astimezone(timezone.utc)
     _, _, body = get(f"{API}/get_streaming_url/?bitrate=128&timestamp={iso(start + timedelta(seconds=30))}")
     data = json.loads(body)
-    assert data.get("sg-url", "").endswith(".mp3") or ".mp3?" in data.get("sg-url", ""), f"unexpected sg-url: {data}"
+    # MP3 normally; ADTS AAC turned up during KEXP's Oct 30 - Nov 2 2026 outage
+    assert re.search(r"\.(mp3|aac)(\?|$)", data.get("sg-url", "")), f"unexpected sg-url: {data}"
     assert isinstance(data.get("sg-offset"), int), f"sg-offset not an int: {data}"
     # the plugin assumes ~10 min of pre-roll before the show
     assert 300 <= data["sg-offset"] <= 1200, f"sg-offset {data['sg-offset']}s outside the expected pre-roll"
@@ -74,11 +75,12 @@ def _():
     return f"offset {data['sg-offset']}s"
 
 
-@check("archive file is a seekable MP3")
+@check("archive file is seekable audio")
 def _():
     status, headers, body = get(state["file"], {"Range": "bytes=1000000-1000999"})
     assert status == 206, f"range request returned {status}"
-    assert "audio/mpeg" in headers.get("Content-Type", ""), headers.get("Content-Type")
+    want = "audio/aac" if re.search(r"\.aac(\?|$)", state["file"]) else "audio/mpeg"
+    assert want in headers.get("Content-Type", ""), headers.get("Content-Type")
     assert len(body) == 1000, f"got {len(body)} bytes"
 
 
