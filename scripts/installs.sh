@@ -7,6 +7,10 @@
 #     zip, so this runs higher than the number of people.
 #  3. Upstream watch: danielvijge/lms_mixcloud PR #51 (login on LMS < 9.2),
 #     issue #46, and whether the latest official release contains the fix.
+#  4. Our posts elsewhere: issues/PRs Ethros19 opened or commented on in
+#     other people's repos (found by GitHub search, so new ones show up by
+#     themselves), with replies since our last post. Open ones always show;
+#     closed ones only if they changed in the last $DAYS days.
 # Set GH_TOKEN to avoid GitHub's anonymous rate limit (60 requests/hour).
 set -euo pipefail
 
@@ -17,7 +21,7 @@ DAYS=${DAYS:-30}
 STATS=$(curl -fsS -m 30 "https://stats.lms-community.org/api/stats/plugins?days=$DAYS")
 
 STATS=$STATS DAYS=$DAYS python3 - <<'PY'
-import json, os, urllib.request, urllib.error
+import json, os, urllib.parse, urllib.request, urllib.error
 
 def gh(path, raw=False):
     url = path if path.startswith("https://") else "https://api.github.com/" + path
@@ -110,4 +114,61 @@ master = gh(f"repos/{UP}/commits?per_page=1") or []
 if isinstance(master, list) and master:
     c = master[0]
     print(f"  Last commit on master: {c['commit']['author']['date'][:10]} {c['commit']['message'].splitlines()[0]}")
+
+# -- our issues and PRs on other projects --------------------------------------
+ME = "Ethros19"
+US = {ME, "ethan-piper"}          # the owner's other account: its comments are ours too
+RECENT = os.environ["DAYS"]
+import datetime
+cutoff = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=int(RECENT))).strftime("%Y-%m-%dT%H:%M:%SZ")
+print(f"\nOur issues & PRs on other projects ({ME}; closed ones only if active in the last {RECENT} days):")
+
+found = {}
+for q in (f"author:{ME} -user:{ME}", f"commenter:{ME} -user:{ME}"):
+    res = gh("search/issues?per_page=50&sort=updated&q=" + urllib.parse.quote(q)) or {}
+    if "_error" in res:
+        print(f"  search unavailable ({res['_error']})")
+        continue
+    for it in res.get("items", []):
+        found[it["html_url"]] = it
+
+if not found:
+    print("  none found (GitHub search can take a few minutes to index new posts)")
+
+hidden = 0
+for it in sorted(found.values(), key=lambda i: (i["state"] != "open", i["updated_at"]), reverse=False):
+    if it["state"] != "open" and it["updated_at"] < cutoff:
+        hidden += 1
+        continue
+    repo = it["repository_url"].split("/repos/", 1)[1]
+    is_pr = "pull_request" in it
+    comments = gh(it["comments_url"] + "?per_page=100")
+    comments = comments if isinstance(comments, list) else []
+    if is_pr:   # code review comments live elsewhere
+        review = gh(f"repos/{repo}/pulls/{it['number']}/comments?per_page=100")
+        comments += review if isinstance(review, list) else []
+
+    # our last word: our latest comment, or opening it
+    ours = [c["created_at"] for c in comments if c["user"]["login"] in US]
+    if it["user"]["login"] in US:
+        ours.append(it["created_at"])
+    last_ours = max(ours) if ours else ""
+    replies = sorted((c for c in comments if c["user"]["login"] not in US and c["created_at"] > last_ours),
+                     key=lambda c: c["created_at"])
+
+    state = it["state"].upper()
+    if is_pr and (it.get("pull_request") or {}).get("merged_at"):
+        state = "MERGED"
+    role = "opened" if it["user"]["login"] == ME else "commented"
+    print(f"  {repo}#{it['number']} ({'PR' if is_pr else 'issue'}, {role}) {state}: {it['title'][:60]}")
+    if replies:
+        last = replies[-1]
+        snippet = " ".join(last["body"].split())[:90]
+        print(f"    → {len(replies)} new repl{'y' if len(replies) == 1 else 'ies'} since our last post ({last_ours[:10]}); "
+              f"latest {last['user']['login']} {last['created_at'][:10]}: {snippet}")
+        print(f"      {last['html_url']}")
+    else:
+        print(f"    no replies since our last post ({last_ours[:10]})")
+if hidden:
+    print(f"  ({hidden} older closed item{'s' if hidden != 1 else ''} not shown)")
 PY
