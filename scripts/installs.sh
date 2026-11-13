@@ -118,13 +118,15 @@ if isinstance(master, list) and master:
 # -- our issues and PRs on other projects --------------------------------------
 ME = "Ethros19"
 US = {ME, "ethan-piper"}          # the owner's other account: its comments are ours too
+OWN = (ME, "withpiper")           # accounts/orgs that aren't "other projects"
 RECENT = os.environ["DAYS"]
 import datetime
 cutoff = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=int(RECENT))).strftime("%Y-%m-%dT%H:%M:%SZ")
 print(f"\nOur issues & PRs on other projects ({ME}; closed ones only if active in the last {RECENT} days):")
 
 found = {}
-for q in (f"author:{ME} -user:{ME}", f"commenter:{ME} -user:{ME}"):
+skip = " ".join(f"-user:{o}" for o in OWN)
+for q in (f"author:{ME} {skip}", f"commenter:{ME} {skip}"):
     res = gh("search/issues?per_page=50&sort=updated&q=" + urllib.parse.quote(q)) or {}
     if "_error" in res:
         print(f"  search unavailable ({res['_error']})")
