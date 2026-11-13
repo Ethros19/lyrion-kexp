@@ -36,11 +36,12 @@ def gh(path, raw=False):
 stats = {k: v for d in json.loads(os.environ["STATS"]) for k, v in d.items()}
 print(f"Lyrion community stats (servers, last {os.environ['DAYS']} days):")
 for name, note in (("KEXP", ""), ("MixcloudDirect", "Mixcloud Direct (ours)"),
-                   ("MixCloud", "official Mixcloud plugin"), ("LyrionJS", ""), ("WFMU", ""), ("SomaFM", "")):
+                   ("MixCloud", "official Mixcloud plugin"),
+                   ("YouTubeDirect", "YouTube Direct (ours)"), ("YouTube", "philippe44's YouTube plugin"), ("LyrionJS", ""), ("WFMU", ""), ("SomaFM", "")):
     print(f"  {name:<15} {stats.get(name, 0):>5}  {note}")
 print(f"  ({len(stats)} plugins tracked)")
 
-for repo in ("Ethros19/lyrion-kexp", "Ethros19/lyrion-mixcloud"):
+for repo in ("Ethros19/lyrion-kexp", "Ethros19/lyrion-mixcloud", "Ethros19/lyrion-youtube"):
     print(f"\nGitHub release downloads, {repo} (installs + updates):")
     releases = gh(f"repos/{repo}/releases?per_page=100") or []
     if isinstance(releases, dict):
